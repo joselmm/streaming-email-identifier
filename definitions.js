@@ -1,6 +1,6 @@
 function verifyAmazon(root, respuesta) {
 
-  console.log(ddddgd)
+ hijofjdf();
   var regexSixNumberAmazon = /^\d{6}$/g;
 
   //FORMATO APP PRIMEVIDEO:
