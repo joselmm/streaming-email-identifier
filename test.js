@@ -197,3 +197,59 @@ if(messages.length===0){
 }
   return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
 }
+
+
+function VerifyContactAndEmail(userData) {
+  try{
+
+/*   
+  userData = {
+    "emailToCheck":"unadeprimeahi@outlook.com",
+    "contact":"3045969261"
+}; */
+  var fetchedData = UrlFetchApp.fetch(LINK_LIBRERIA).getContentText();
+  //console.log(fetchedData)
+  var [clients, platforms] = JSON.parse(fetchedData).sheetsData;
+  var contactIndex = clients.data.map(e=>e.contact).indexOf(userData.contact);
+  if(contactIndex>=0 && clients.data[contactIndex].active==="1"){
+    //console.log(clients.data[contactIndex])
+    console.log("si esta activo");
+    var userPlatforms = platforms.data.filter(e=>e.clientId===clients.data[contactIndex].id);
+    if(userPlatforms.length>=1){
+      var platformsWithTheEmail_Index = userPlatforms.map(p=>p.email.toLowerCase()).indexOf(userData.emailToCheck.toLowerCase());
+      if(platformsWithTheEmail_Index>=0){
+         console.log("dsdddd")
+        if(userPlatforms[platformsWithTheEmail_Index].active==="1"){
+
+        if(userPlatforms[platformsWithTheEmail_Index].withCredentials==="1"){
+          console.log("el usuario tiene acceso a las credenciales de la cuenta")
+          return true
+        }else{
+         throw new Error("El usuario con el contacto '"+userData.contact+"' no tiene Acceso´al correo "+userData.emailToCheck)
+
+        }
+        }else{
+         throw new Error("El usuario con el contacto '"+userData.contact+"' no activo el correo "+userData.emailToCheck)
+
+        }
+
+      }else{
+         throw new Error("El usuario con el contacto '"+userData.contact+"' no tiene Cuentas con el correo "+userData.emailToCheck)
+
+      }
+      ""
+    }else{
+    throw new Error("El usuario con el contacto '"+userData.contact+"' no tiene Cuentas")
+
+    }
+  
+
+  
+    
+  }else{
+    throw new Error("El usuario con el contacto '"+userData.contact+"' ya no esta activo, por favor contacta con el vendedor para adquirir una cuenta nueva")
+  }
+  }catch(err){
+    return err.message;
+  }
+}
