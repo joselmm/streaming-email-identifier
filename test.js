@@ -83,17 +83,19 @@ function extractCode(htmlText) {
     message:"No se encontro ningun codigo"
   }
   const root = NodeHtmlParser.parse(htmlText);
-
+  //VERIFICAR SI ES DE AMAZON
   verifyAmazon(root,respuesta);
+  if(respuesta.noError===true){
+    return respuesta;
+  }
+  //VERIFICAR SI ES DE NETFLIX
+  verifyNetflix(root,respuesta);
   if(respuesta.noError===true){
     return respuesta;
   }
 
   return respuesta
 }
-
-
-
 
 function parseAttributes(attrsStr) {
   const attrs = {};
