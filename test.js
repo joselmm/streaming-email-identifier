@@ -77,6 +77,21 @@ function verifyNetflix(root, respuesta) {
 
 }
 
+function extractCode(htmlText) {
+  var respuesta = {
+    noError:false,
+    message:"No se encontro ningun codigo"
+  }
+  const root = NodeHtmlParser.parse(htmlText);
+
+  verifyAmazon(root,respuesta);
+  if(respuesta.noError===true){
+    return respuesta;
+  }
+
+  return respuesta
+}
+
 
 
 
