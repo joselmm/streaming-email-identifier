@@ -138,12 +138,12 @@ function main(){
 }
 try{
 
-//var userData = JSON.parse(e.postData.contents);
+var userData = e ? JSON.parse(e.postData.contents);
 /* " || "maria7252.zuluaga@gmail.com", */
-var userData = {
+/* var userData = {
     "emailToCheck":"yorvenivegapadilla@gmail.com",
     "contact":"3226912442"
-}
+} */
 var verify = VerifyContactAndEmail(userData);
 if(verify!==true){
   throw new Error(verify);
