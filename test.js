@@ -173,12 +173,12 @@ function main(e) {
 
 
             // VERIFICAR QUE EL MENSAJE SEA DE AL MENOS 20 MINUTOS DE ANTIGUEDAD
-            /*   
-               if(Date.now() - dateObj.getTime()> (1000 * 1 * 60 * 20)){
+               
+            if(Date.now() - dateObj.getTime()> (1000 * 1 * 60 * 20)){
                 //SI EL ULTIMO EMAIL ES DE HACE MAS DE 20 MINUTOS,NO SE TOMARA EN CUENTA
                 console.log("No hay mensajes de los ulti")
                 throw new Error("No se ha recibido ningun mensaje de al menos 20 minutos a "+userData.emailToCheck)
-              } */
+            } 
 
 
             var estimatedTimeAgo = dateObj.toLocaleTimeString('es-CO', { hour12: true }) + " - " + dateObj.toLocaleDateString("es-CO") + "\n" + timeAgo(dateObj)
