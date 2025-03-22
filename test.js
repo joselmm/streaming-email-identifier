@@ -1,7 +1,8 @@
-function verifyAmazon(root, respuesta) {
+function verifyAmazon(root, respuesta, subject) {
 
     var regexSixNumberAmazon = /^\d{6}$/g;
-
+    
+    if(subject.includes("Recuperación de contraseña") || subject.includes("Password recovery") ) return respuesta;
     //FORMATO APP PRIMEVIDEO:
     var emailHtml = root.querySelector("body table > tbody > tr > td > div > table > tbody > tr > td > div:nth-child(5) > table > tbody > tr > td > div > table > tbody > tr > td > table > tbody > tr:nth-child(4) > td > div > span");
 
@@ -78,14 +79,14 @@ function verifyNetflix(root, respuesta) {
 
 }
 
-function extractCode(htmlText) {
+function extractCode(htmlText, subject) {
     var respuesta = {
         noError: false,
         message: "No se encontro ningun codigo"
     }
     const root = NodeHtmlParser.parse(htmlText);
     //VERIFICAR SI ES DE AMAZON
-    verifyAmazon(root, respuesta);
+    verifyAmazon(root, respuesta, subject);
     if (respuesta.noError === true) {
         return respuesta;
     }
@@ -166,6 +167,7 @@ function main(e) {
 
             var ultimoMensaje = messages[messages.length - 1];
             var htmlText = ultimoMensaje.getBody();
+            var subject = ultimoMensaje.getSubject();
 
 
             var dateObj = ultimoMensaje.getDate();
@@ -185,7 +187,7 @@ function main(e) {
             response["estimatedTimeAgo"] = estimatedTimeAgo;
 
             //console.log(estimatedTimeAgo)
-            var codeResponse = extractCode(htmlText);
+            var codeResponse = extractCode(htmlText, subject);
             console.log(codeResponse)
             response = { ...response, ...codeResponse };
         }
