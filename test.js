@@ -231,7 +231,7 @@ function VerifyContactAndEmail(userData) {
 
                         }
                     } else {
-                        throw new Error("El usuario con el contacto '" + userData.contact + "' no activo el correo " + userData.emailToCheck)
+                        throw new Error("El usuario con el contacto '" + userData.contact + "' no tiene activo el correo " + userData.emailToCheck)
 
                     }
 
