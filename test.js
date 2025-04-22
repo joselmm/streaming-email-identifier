@@ -150,7 +150,7 @@ function main(e) {
             throw new Error(verify);
         }
         //var threads = GmailApp.search('from: <'+correo+'> is:unread', 0, 1); // Obtener el hilo de correo electrónico más recientes del remitente especificado
-        var threads = GmailApp.search(userData.emailToCheck + ' is:unread', 0, 1); // Obtener el hilo de correo electrónico más recientes del remitente especificado
+        var threads = GmailApp.search("to:"+userData.emailToCheck, 0, 1); // Obtener el hilo de correo electrónico más recientes del remitente especificado
         var messages = [];
         threads.forEach(function (thread) {
             var threadMessages = thread.getMessages();
@@ -164,8 +164,11 @@ function main(e) {
             throw new Error("No se encontraron mensajes para " + userData.emailToCheck + " y " + userData.contact)
 
         } else {
+            var mensajesFiltrados = messages.filter(function(msg) {
+              return msg.getTo().indexOf(userData.emailToCheck) !== -1;
+            });
 
-            var ultimoMensaje = messages[messages.length - 1];
+            var ultimoMensaje = mensajesFiltrados[mensajesFiltrados.length - 1];
             var htmlText = ultimoMensaje.getBody();
             var subject = ultimoMensaje.getSubject();
 
@@ -175,12 +178,12 @@ function main(e) {
 
 
             // VERIFICAR QUE EL MENSAJE SEA DE AL MENOS 20 MINUTOS DE ANTIGUEDAD
-               
+            /*   
             if(Date.now() - dateObj.getTime()> (1000 * 1 * 60 * 20)){
                 //SI EL ULTIMO EMAIL ES DE HACE MAS DE 20 MINUTOS,NO SE TOMARA EN CUENTA
                 console.log("No hay mensajes de los ulti")
                 throw new Error("No se ha recibido ningun mensaje de al menos 20 minutos a "+userData.emailToCheck)
-            } 
+            } */
 
 
             var estimatedTimeAgo = dateObj.toLocaleTimeString('es-CO', { hour12: true }) + " - " + dateObj.toLocaleDateString("es-CO") + "\n" + timeAgo(dateObj)
