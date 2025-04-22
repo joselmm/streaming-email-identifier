@@ -1,3 +1,4 @@
+var theContact = "";
 function verifyAmazon(root, respuesta, subject) {
 
     var regexSixNumberAmazon = /^\d{6}$/g;
@@ -192,13 +193,14 @@ function main(e) {
             //console.log(estimatedTimeAgo)
             var codeResponse = extractCode(htmlText, subject);
             console.log(codeResponse)
-            response = { ...response, ...codeResponse };
+            response = { ...response, ...codeResponse, contact: theContact };
         }
 
     } catch (err) {
         console.log(err)
         response.message = err.message;
         response.noError = false;
+        response.contact = theContact;
     }
     return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
 }
@@ -206,7 +208,7 @@ function main(e) {
 
 function VerifyContactAndEmail(userData) {
     try {
-
+    theContact = userData.contact;
         /*   
           userData = {
             "emailToCheck":"unadeprimeahi@outlook.com",
@@ -217,6 +219,8 @@ function VerifyContactAndEmail(userData) {
         var [clients, platforms] = JSON.parse(fetchedData).sheetsData;
         var contactIndex = clients.data.map(e => e.contact).indexOf(userData.contact);
         if (contactIndex >= 0 && clients.data[contactIndex].active === "1") {
+
+            theContact = clients.data[contactIndex].name + " ("+ theContact+")";
             //console.log(clients.data[contactIndex])
             console.log("si esta activo");
             var userPlatforms = platforms.data.filter(e => e.clientId === clients.data[contactIndex].id);
