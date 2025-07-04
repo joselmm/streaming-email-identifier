@@ -37,9 +37,9 @@ function verifyAmazon(root, respuesta, subject) {
 function verifyNetflix(root, respuesta) {
 
 
-    var bodyHtml = root.querySelector("body").toString();
+    var bodyHtml = root.querySelector("body")?.toString();
     //COMPROBAR QUE EN EL CONTENIDO DEL CORREO ESTE LA PALABRA "netflix" (mayusculas o como sea)
-    if (!bodyHtml.toLowerCase().includes("netflix")) return
+    if (!bodyHtml?.toLowerCase()?.includes("netflix")) return
 
     var codeContainer = root.querySelector("table > tbody > tr > td > table > tbody > tr:nth-child(2) > td > table:nth-child(3) > tbody > tr > td");
     if (codeContainer && (bodyHtml.includes("Ingresa este código para iniciar sesión") || bodyHtml.includes("Enter this code to sign in"))) {
@@ -54,7 +54,7 @@ function verifyNetflix(root, respuesta) {
     //COMPROBAR SI ES DE FUERA DE CASA
     var enlaces = root.querySelectorAll("body a");
 
-    var travelEnlaceAttrs = enlaces.filter(e => e.rawAttrs).map(e => parseAttributes(e.rawAttrs)).filter(e => e.href).find(e => e.href.startsWith("https://www.netflix.com/account/travel/verify?"))
+    var travelEnlaceAttrs = enlaces?.filter(e => e.rawAttrs).map(e => parseAttributes(e.rawAttrs)).filter(e => e.href).find(e => e.href.startsWith("https://www.netflix.com/account/travel/verify?"))
     if (travelEnlaceAttrs) {
         console.log("Es para estoy fuera de casa");
         respuesta.noError = true;
@@ -64,7 +64,7 @@ function verifyNetflix(root, respuesta) {
     }
 
     //COMPROBAR SI ES PARA ACTUALIZAR HOGAR
-    var actualizarHogarEnlaceAttrs = enlaces.filter(e => e.rawAttrs).map(e => parseAttributes(e.rawAttrs)).filter(e => e.href).find(e => e.href.startsWith("https://www.netflix.com/account/update-primary-location?"))
+    var actualizarHogarEnlaceAttrs = enlaces?.filter(e => e.rawAttrs).map(e => parseAttributes(e.rawAttrs)).filter(e => e.href).find(e => e.href.startsWith("https://www.netflix.com/account/update-primary-location?"))
     if (actualizarHogarEnlaceAttrs) {
         console.log("Es para actualizar hogar");
         respuesta.noError = true;
