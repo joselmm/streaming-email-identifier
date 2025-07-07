@@ -34,6 +34,28 @@ function verifyAmazon(root, respuesta, subject) {
     return respuesta;
 }
 
+function verifyMax(root, respuesta, subject) {
+
+    var regexSixNumberMax = /^\d{6}$/g;
+    
+    //if(subject.includes("Recuperación de contraseña") || subject.includes("Password recovery") ) return respuesta;
+    //FORMATO CODIGO DE INICIO DE SESION EN LA WEB CON MAX:
+    var emailHtml = root.querySelector("tr:nth-child(1) > td > p > b");
+
+    if (emailHtml?.innerText?.trim()?.match(regexSixNumberMax)?.length > 0 && (subject.includes("Urgente: Tu código de un solo uso de Max") || subject.includes("Time Sensitive: Your One-Time Max Code"))) {
+        console.log("Es de max codigo de iniciar sesion");
+        respuesta.noError = true;
+        respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberMax)[0];
+        respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en Max'
+        return respuesta
+    }
+
+
+
+    console.log("no es de Max");
+    return respuesta;
+}
+
 function verifyNetflix(root, respuesta) {
 
 
@@ -94,6 +116,11 @@ function extractCode(htmlText, subject) {
     }
     //VERIFICAR SI ES DE NETFLIX
     verifyNetflix(root, respuesta);
+    if (respuesta.noError === true) {
+        return respuesta;
+    }
+
+    verifyMax(root, respuesta, subject);
     if (respuesta.noError === true) {
         return respuesta;
     }
