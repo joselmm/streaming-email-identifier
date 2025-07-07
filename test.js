@@ -81,7 +81,7 @@ function verifyNetflix(root, respuesta) {
 }
 
 function extractCode(htmlText, subject) {
-    debugger
+    
     var respuesta = {
         noError: false,
         message: "No se encontro ningun codigo"
@@ -136,6 +136,7 @@ function timeAgo(date) {
 }
 
 function main(e) {
+    debugger
     var response = {
         noError: true
     }
