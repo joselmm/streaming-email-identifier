@@ -46,7 +46,7 @@ function verifyMax(root, respuesta, subject) {
         console.log("Es de max codigo de iniciar sesion");
         respuesta.noError = true;
         respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberMax)[0];
-        respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en Max'
+        respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en Hbo Max'
         return respuesta
     }
 
