@@ -42,7 +42,7 @@ function verifyMax(root, respuesta, subject) {
     //FORMATO CODIGO DE INICIO DE SESION EN LA WEB CON MAX:
     var emailHtml = root.querySelector("tr:nth-child(1) > td > p > b");
 
-    if (emailHtml?.innerText?.trim()?.match(regexSixNumberMax)?.length > 0 && (subject.includes("Urgente: Tu código de un solo uso de Max") || subject.includes("Time Sensitive: Your One-Time HBO Max Code"))) {
+    if (emailHtml?.innerText?.trim()?.match(regexSixNumberMax)?.length > 0 && (subject.includes("Urgente: Tu código de un solo uso de HBO Max") || subject.includes("Time Sensitive: Your One-Time HBO Max Code"))) {
         console.log("Es de max codigo de iniciar sesion");
         respuesta.noError = true;
         respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberMax)[0];
