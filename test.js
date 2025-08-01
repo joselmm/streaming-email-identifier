@@ -46,7 +46,7 @@ function verifyYoutube(root, respuesta) {
    var aElement = root.querySelector("tr:nth-child(2) > td > p:nth-child(5) > a");
    var emailElement = root.querySelector("tr:nth-child(2) > td > p:nth-child(2) > span");
 
-    if (codeElement && aElement & emailElement) {
+    if (codeElement && aElement && emailElement) {
         var code = codeElement?.innerText?.trim();
         var link = aElement?.attributes?.href?.trim();
         var email = emailElement?.innerText?.trim();
