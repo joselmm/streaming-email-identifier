@@ -9,7 +9,7 @@ function verifyAmazon(root, respuesta, subject) {
     //FORMATO APP PRIMEVIDEO:
     var emailHtml = root.querySelector("body table > tbody > tr > td > div > table > tbody > tr > td > div:nth-child(5) > table > tbody > tr > td > div > table > tbody > tr > td > table > tbody > tr:nth-child(4) > td > div > span");
 
-    if (emailHtml?.innerText?.trim()?.match(regexSixNumberAmazon)?.length > 0) 
+    if (emailHtml?.innerText?.trim()?.match(regexSixNumberAmazon)?.length > 0) {
         globalThis.keyword = "prime video";
         console.log("Es de prime video app");
         respuesta.noError = true;
