@@ -52,7 +52,7 @@ function verifyYoutube(root, respuesta) {
         var email = emailElement?.innerText?.trim();
         if(code?.match(regexSixNumberMax) && 
            link?.startsWith("https://accounts.google.com/AccountDisavow?adt=") && 
-           email?.match(regexSixNumberMax)){
+           email?.match(regexEmail)){
 
                 console.log("Es  codigo de verificacion de cuenta de yt");
                 respuesta.noError = true;
