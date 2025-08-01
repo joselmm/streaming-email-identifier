@@ -166,6 +166,12 @@ function extractCode(htmlText, subject) {
         return respuesta;
     }
 
+     //VERIFICAR SI ES DE YT
+    verifyYoutube(root, respuesta);
+    if (respuesta.noError === true) {
+        return respuesta;
+    }
+
     return respuesta
 }
 
