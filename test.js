@@ -1,4 +1,6 @@
 var theContact = "";
+const regexEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+
 function verifyAmazon(root, respuesta, subject) {
 
     var regexSixNumberAmazon = /^\d{6}$/g;
@@ -31,6 +33,37 @@ function verifyAmazon(root, respuesta, subject) {
 
 
     console.log("no es de amazon");
+    return respuesta;
+}
+
+function verifyYoutube(root, respuesta) {
+
+    var regexSixNumberMax = /^\d{6}$/g;
+    
+    //if(subject.includes("Recuperación de contraseña") || subject.includes("Password recovery") ) return respuesta;
+    //3 factores para identifar el correo
+   var codeElement = root.querySelector("tr:nth-child(2) > td > div > p > strong");
+   var aElement = root.querySelector("tr:nth-child(2) > td > p:nth-child(5) > a");
+   var emailElement = root.querySelector("tr:nth-child(2) > td > p:nth-child(2) > span");
+
+    if (codeElement && aElement & emailElement) {
+        var code = codeElement?.innerText?.trim();
+        var link = aElement?.attributes?.href?.trim();
+        var email = emailElement?.innerText?.trim();
+        if(code?.match(regexSixNumberMax) && 
+           link?.startsWith("https://accounts.google.com/AccountDisavow?adt=") && 
+           email?.match(regexSixNumberMax)){
+
+                console.log("Es  codigo de verificacion de cuenta de yt");
+                respuesta.noError = true;
+                respuesta.code = code;
+                respuesta.about = 'Codigo de verificacion Para Iniciar Sesion Youtube (Gmail)'
+                return respuesta
+           }
+    
+    }
+
+    console.log("no es de YOutube");
     return respuesta;
 }
 
