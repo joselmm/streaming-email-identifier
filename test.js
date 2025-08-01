@@ -37,7 +37,7 @@ function verifyAmazon(root, respuesta, subject) {
 }
 
 function verifyYoutube(root, respuesta) {
-
+console.log("comprobando si es de yt")
     var regexSixNumberMax = /^\d{6}$/g;
     
     //if(subject.includes("Recuperación de contraseña") || subject.includes("Password recovery") ) return respuesta;
@@ -45,7 +45,7 @@ function verifyYoutube(root, respuesta) {
    var codeElement = root.querySelector("tr:nth-child(2) > td > div > p > strong");
    var aElement = root.querySelector("tr:nth-child(2) > td > p:nth-child(5) > a");
    var emailElement = root.querySelector("tr:nth-child(2) > td > p:nth-child(2) > span");
-    debugger
+    
     if (codeElement && aElement && emailElement) {
         var code = codeElement?.innerText?.trim();
         var link = aElement?.attributes?.href?.trim();
