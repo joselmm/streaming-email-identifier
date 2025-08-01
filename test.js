@@ -64,7 +64,7 @@ function verifyYoutube(root, respuesta) {
     }
 
     var isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
-    if(isNode && typeoff globalThis.to === "string"){
+    if(isNode && typeof globalThis.to === "string"){
         globalThis.to = email;
         console.log("se cambio la propiedad 'globalThis.to' a '"+email+"'")
     }else{
