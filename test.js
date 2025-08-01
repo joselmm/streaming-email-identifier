@@ -58,18 +58,29 @@ console.log("comprobando si es de yt")
                 respuesta.noError = true;
                 respuesta.code = code;
                 respuesta.about = 'Codigo de verificacion Para Iniciar Sesion Youtube (Gmail)'
+
+
+
+            
+                var isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
+                if(isNode && typeof globalThis.to === "string"){
+                    globalThis.to = email;
+                    console.log("se cambio la propiedad 'globalThis.to' a '"+email+"'")
+                }else{
+                    console.log("No es nodejs")
+                }
+
+
+
+
+
+            
                 return respuesta
            }
     
     }
 
-    var isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
-    if(isNode && typeof globalThis.to === "string"){
-        globalThis.to = email;
-        console.log("se cambio la propiedad 'globalThis.to' a '"+email+"'")
-    }else{
-        console.log("No es nodejs")
-    }
+    
 
     console.log("no es de YOutube");
     return respuesta;
