@@ -138,10 +138,10 @@ function verifyNetflix(root, respuesta) {
 
     var travelEnlaceAttrs = enlaces?.filter(e => e.rawAttrs).map(e => parseAttributes(e.rawAttrs)).filter(e => e.href).find(e => e.href.startsWith("https://www.netflix.com/account/travel/verify?"))
     if (travelEnlaceAttrs) {
-        console.log("Es para estoy fuera de casa");
+        console.log("Es para estoy estoy de viaje netflix");
         respuesta.noError = true;
         respuesta.link = travelEnlaceAttrs.href;
-        respuesta.about = "Enlace codigo Estoy Fuera de casa Netflix\n(Una Vez Abierto Vencerá)";
+        respuesta.about = "Enlace Codigo Estoy de Viaje Netflix\n(Valido por 15 Min)";
         return true;
     }
 
@@ -151,9 +151,22 @@ function verifyNetflix(root, respuesta) {
         console.log("Es para actualizar hogar");
         respuesta.noError = true;
         respuesta.link = actualizarHogarEnlaceAttrs.href;
-        respuesta.about = "Enlace codigo Actualizar Hogar Netflix\n(Una Vez Abierto Vencerá)";
+        respuesta.about = "Enlace Aprobacion Actualizar Hogar Netflix\n(Valido por 15 Min)";
         return true;
     }
+
+    //ENLACE DE APROBACION EN TV SMART
+
+    var theLinkElement = root.querySelector('a[href^="https://www.netflix.com/ilum?code="]');
+    var link = r?.attributes?.href?.trim();
+
+      if(bodyHtml.includes('Aprueba la nueva solicitud de inicio de sesión') && bodyHtml.includes("Te escribimos para informarte que tú o alguien que usa tu cuenta solicitaron un enlace de inicio de sesión") && theLinkElement && link){
+        console.log("Es para enlace de aprobacion en Netflix TV");
+        respuesta.noError=true;
+        respuesta.link = link;
+        respuesta.about = "Enlace de Aprobacion en TV - Netflix\n(Valido por 15 min)";
+        
+      }
 
     console.log("NO continuar con netflix")
 
