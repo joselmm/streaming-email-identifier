@@ -133,24 +133,53 @@ function verifyNetflix(root, respuesta) {
     };
 
 
-    //COMPROBAR SI ES DE FUERA DE CASA
-    var enlaces = root.querySelectorAll("body a");
+    //COMPROBAR SI ES ESTOY DE VIAJE
+   
 
-    var travelEnlaceAttrs = enlaces?.filter(e => e.rawAttrs).map(e => parseAttributes(e.rawAttrs)).filter(e => e.href).find(e => e.href.startsWith("https://www.netflix.com/account/travel/verify?"))
-    if (travelEnlaceAttrs) {
+    var linkElementViaje = root.querySelector('a[href^="https://www.netflix.com/account/travel/verify?"]');
+    if (linkElementViaje) {
         console.log("Es para estoy estoy de viaje netflix");
+        
+        var link = linkElementViaje?.attributes?.href?.trim();
+        var profileInfoElement = root.querySelector('td.profile-info');
+
+        if (profileInfoElement?.innerText?.startsWith("Solicitud de ")) {
+          var profileName = profileInfoElement?.innerText.split("Solicitud de ")[1]?.split("desde:")[0]?.trim();
+    
+          if (profileName) {
+            console.log("Para perfil: "+profileName)
+              globalThis.profileName = profileName
+          }
+          
+        }
         respuesta.noError = true;
-        respuesta.link = travelEnlaceAttrs.href;
+        respuesta.link = link;
         respuesta.about = "Enlace Codigo Estoy de Viaje Netflix\n(Valido por 15 Min)";
         return true;
     }
 
     //COMPROBAR SI ES PARA ACTUALIZAR HOGAR
-    var actualizarHogarEnlaceAttrs = enlaces?.filter(e => e.rawAttrs).map(e => parseAttributes(e.rawAttrs)).filter(e => e.href).find(e => e.href.startsWith("https://www.netflix.com/account/update-primary-location?"))
-    if (actualizarHogarEnlaceAttrs) {
-        console.log("Es para actualizar hogar");
+    var linkElement = root.querySelector('a[href^="https://www.netflix.com/account/update-primary-location?"]');
+    if (linkElement) {
+        console.log("Es para actualizar hogar netflix");
+        
+            var link = linkElement?.attributes?.href?.trim();
+
+        var profileInfoElement = root.querySelector('td.profile-info');
+        
+        if (profileInfoElement?.innerText?.startsWith("Solicitud de ")) {
+          var profileName = profileInfoElement?.innerText.split("Solicitud de ")[1]?.split(",")[0]?.trim();
+    
+          if (profileName) {
+            console.log("Para perfil: "+profileName)
+              
+              globalThis.profileName = profileName
+         }
+          
+            
+        }
         respuesta.noError = true;
-        respuesta.link = actualizarHogarEnlaceAttrs.href;
+        respuesta.link = link;
         respuesta.about = "Enlace Aprobacion Actualizar Hogar Netflix\n(Valido por 15 Min)";
         return true;
     }
