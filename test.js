@@ -10,7 +10,7 @@ function verifyAmazon(root, respuesta, subject) {
     var emailHtml = root.querySelector("body table > tbody > tr > td > div > table > tbody > tr > td > div:nth-child(5) > table > tbody > tr > td > div > table > tbody > tr > td > table > tbody > tr:nth-child(4) > td > div > span");
 
     if (emailHtml?.innerText?.trim()?.match(regexSixNumberAmazon)?.length > 0) {
-        globalThis.keyword = "prime video";
+        globalThis.keyword = "prime";
         console.log("Es de prime video app");
         respuesta.noError = true;
         respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberAmazon)[0];
@@ -91,6 +91,7 @@ console.log("comprobando si es de yt")
 }
 
 function verifyMax(root, respuesta, subject) {
+        globalThis.keyword = "max";
 
     var regexSixNumberMax = /^\d{6}$/g;
     
@@ -100,7 +101,6 @@ function verifyMax(root, respuesta, subject) {
 
     if (emailHtml?.innerText?.trim()?.match(regexSixNumberMax)?.length > 0 && (subject.includes("Urgente: Tu código de un solo uso de HBO Max") || subject.includes("Time Sensitive: Your One-Time HBO Max Code"))) {
         console.log("Es de max codigo de iniciar sesion");
-        globalThis.keyword = "max";
         
         respuesta.noError = true;
         respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberMax)[0];
@@ -115,6 +115,7 @@ function verifyMax(root, respuesta, subject) {
 }
 
 function verifyNetflix(root, respuesta) {
+    globalThis.keyword = "netflix";
 
 
     var bodyHtml = root.querySelector("body")?.toString();
@@ -124,7 +125,6 @@ function verifyNetflix(root, respuesta) {
     var codeContainer = root.querySelector("table > tbody > tr > td > table > tbody > tr:nth-child(2) > td > table:nth-child(3) > tbody > tr > td");
     if (codeContainer && (bodyHtml.includes("Ingresa este código para iniciar sesión") || bodyHtml.includes("Enter this code to sign in"))) {
         console.log("Es codigo de inicio de sesión")
-        globalThis.keyword = "netflix";
         
         respuesta.noError = true;
         respuesta.code = codeContainer.innerText.trim();
