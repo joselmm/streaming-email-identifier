@@ -158,7 +158,7 @@ function verifyNetflix(root, respuesta) {
     //ENLACE DE APROBACION EN TV SMART
 
     var theLinkElement = root.querySelector('a[href^="https://www.netflix.com/ilum?code="]');
-    var link = r?.attributes?.href?.trim();
+    var link = theLinkElement?.attributes?.href?.trim();
 
       if(bodyHtml.includes('Aprueba la nueva solicitud de inicio de sesión') && bodyHtml.includes("Te escribimos para informarte que tú o alguien que usa tu cuenta solicitaron un enlace de inicio de sesión") && theLinkElement && link){
         console.log("Es para enlace de aprobacion en Netflix TV");
