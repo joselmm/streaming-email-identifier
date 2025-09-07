@@ -210,6 +210,19 @@ function extractCode(htmlText, subject, context={}) {
         message: "No se encontro ningun codigo"
     }
     const root = NodeHtmlParser.parse(htmlText);
+
+
+     // cambiogpt: normalizar siempre los emails de from y to
+    const emailRegex = /<([^>]+)>|([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/;
+    function extractEmail(str) {
+        if (!str) return "";
+        const match = str.match(emailRegex);
+        return match ? (match[1] || match[2]) : "";
+    }
+
+    if (context.to) context.to = extractEmail(context.to); // cambiogpt
+    if (context.from) context.from = extractEmail(context.from); // cambiogpt
+    
     //VERIFICAR SI ES DE AMAZON
     verifyAmazon(root, respuesta, subject, context);
     if (respuesta.noError === true) {
