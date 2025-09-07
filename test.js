@@ -1,16 +1,19 @@
 var theContact = "";
 const regexEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 
-function verifyAmazon(root, respuesta, subject) {
+function verifyAmazon(root, respuesta, subject, context) {
 
-    var regexSixNumberAmazon = /^\d{6}$/g;
+    if (context?.from?.includes("account-update@amazon.com") === false) {
+      return respuesta;
+    }
     
+    var regexSixNumberAmazon = /^\d{6}$/g;
     if(subject.includes("Recuperación de contraseña") || subject.includes("Password recovery") ) return respuesta;
     //FORMATO APP PRIMEVIDEO:
     var emailHtml = root.querySelector("body table > tbody > tr > td > div > table > tbody > tr > td > div:nth-child(5) > table > tbody > tr > td > div > table > tbody > tr > td > table > tbody > tr:nth-child(4) > td > div > span");
 
     if (emailHtml?.innerText?.trim()?.match(regexSixNumberAmazon)?.length > 0) {
-        globalThis.keyword = "prime";
+        context.keyword = "prime";
         console.log("Es de prime video app");
         respuesta.noError = true;
         respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberAmazon)[0];
@@ -23,7 +26,7 @@ function verifyAmazon(root, respuesta, subject) {
     var emailHtml = root.querySelector("body table > tbody > tr > td > table > tbody > tr:nth-child(6) > td > p");
     //var e=emailHtml.innerText;
     if (emailHtml?.innerText?.trim()?.match(regexSixNumberAmazon)?.length > 0) {
-        globalThis.keyword = "prime";
+        context.keyword = "prime";
         
         console.log("Es de primevideo.com")
         respuesta.noError = true;
@@ -39,9 +42,12 @@ function verifyAmazon(root, respuesta, subject) {
     return respuesta;
 }
 
-function verifyYoutube(root, respuesta) {
-console.log("comprobando si es de yt")
+function verifyYoutube(root, respuesta, context) {
+    //console.log("comprobando si es de yt")
     var regexSixNumberMax = /^\d{6}$/g;
+    if (context?.from?.includes("noreply@google.com") === false) {
+      return respuesta;
+    }
     
     //if(subject.includes("Recuperación de contraseña") || subject.includes("Password recovery") ) return respuesta;
     //3 factores para identifar el correo
@@ -56,29 +62,15 @@ console.log("comprobando si es de yt")
         if(code?.match(regexSixNumberMax) && 
            link?.startsWith("https://accounts.google.com/AccountDisavow?adt=") && 
            email?.match(regexEmail)){
-                globalThis.keyword = "youtube";
+                context.keyword = "youtube";
 
                 console.log("Es  codigo de verificacion de cuenta de yt");
                 respuesta.noError = true;
                 respuesta.code = code;
                 respuesta.about = 'Codigo de verificacion Para Iniciar Sesion Youtube (Gmail)'
-
-
-
-            
-                var isNode = typeof process !== 'undefined' && process.versions != null && process.versions.node != null;
-                if(isNode && typeof globalThis.to === "string"){
-                    globalThis.to = email;
-                    console.log("se cambio la propiedad 'globalThis.to' a '"+email+"'")
-                }else{
-                    console.log("No es nodejs")
-                }
-
-
-
-
-
-            
+                context.to = email;
+                console.log("se cambio la propiedad 'context.to' a '"+email+"'")
+        
                 return respuesta
            }
     
@@ -90,8 +82,12 @@ console.log("comprobando si es de yt")
     return respuesta;
 }
 
-function verifyMax(root, respuesta, subject) {
-        globalThis.keyword = "max";
+function verifyMax(root, respuesta, subject, context) {
+    if (context?.from?.includes("no-reply@alerts.hbomax.com") === false) {
+      return respuesta;
+    }
+    
+    context.keyword = "max";
 
     var regexSixNumberMax = /^\d{6}$/g;
     
@@ -114,13 +110,16 @@ function verifyMax(root, respuesta, subject) {
     return respuesta;
 }
 
-function verifyNetflix(root, respuesta) {
-    globalThis.keyword = "netflix";
+function verifyNetflix(root, respuesta, context) {
+    context.keyword = "netflix";
 
+    if (context?.from?.includes("info@account.netflix.com") === false) {
+      return respuesta;
+    }
 
     var bodyHtml = root.querySelector("body")?.toString();
     //COMPROBAR QUE EN EL CONTENIDO DEL CORREO ESTE LA PALABRA "netflix" (mayusculas o como sea)
-    if (!bodyHtml?.toLowerCase()?.includes("netflix")) return
+    if (!bodyHtml?.toLowerCase()?.includes("netflix")) return respuesta
 
     var codeContainer = root.querySelector("table > tbody > tr > td > table > tbody > tr:nth-child(2) > td > table:nth-child(3) > tbody > tr > td");
     if (codeContainer && (bodyHtml.includes("Ingresa este código para iniciar sesión") || bodyHtml.includes("Enter this code to sign in"))) {
@@ -147,8 +146,8 @@ function verifyNetflix(root, respuesta) {
           var profileName = profileInfoElement?.innerText.split("Solicitud de ")[1]?.split("desde:")[0]?.trim();
     
           if (profileName) {
-            console.log("Para perfil: "+profileName)
-              globalThis.profileName = profileName
+              console.log("Para perfil: "+profileName)
+              context.profileName = profileName
           }
           
         }
@@ -163,7 +162,7 @@ function verifyNetflix(root, respuesta) {
     if (linkElement) {
         console.log("Es para actualizar hogar netflix");
         
-            var link = linkElement?.attributes?.href?.trim();
+        var link = linkElement?.attributes?.href?.trim();
 
         var profileInfoElement = root.querySelector('td.profile-info');
         
@@ -171,9 +170,9 @@ function verifyNetflix(root, respuesta) {
           var profileName = profileInfoElement?.innerText.split("Solicitud de ")[1]?.split(",")[0]?.trim();
     
           if (profileName) {
-            console.log("Para perfil: "+profileName)
+              console.log("Para perfil: "+profileName)
               
-              globalThis.profileName = profileName
+              context.profileName = profileName
          }
           
             
@@ -204,7 +203,7 @@ function verifyNetflix(root, respuesta) {
 
 }
 
-function extractCode(htmlText, subject) {
+function extractCode(htmlText, subject, context={}) {
     
     var respuesta = {
         noError: false,
@@ -212,23 +211,23 @@ function extractCode(htmlText, subject) {
     }
     const root = NodeHtmlParser.parse(htmlText);
     //VERIFICAR SI ES DE AMAZON
-    verifyAmazon(root, respuesta, subject);
+    verifyAmazon(root, respuesta, subject, context);
     if (respuesta.noError === true) {
         return respuesta;
     }
     //VERIFICAR SI ES DE NETFLIX
-    verifyNetflix(root, respuesta);
+    verifyNetflix(root, respuesta, context);
     if (respuesta.noError === true) {
         return respuesta;
     }
 
-    verifyMax(root, respuesta, subject);
+    verifyMax(root, respuesta, subject, context);
     if (respuesta.noError === true) {
         return respuesta;
     }
 
      //VERIFICAR SI ES DE YT
-    verifyYoutube(root, respuesta);
+    verifyYoutube(root, respuesta, context);
     if (respuesta.noError === true) {
         return respuesta;
     }
@@ -271,7 +270,7 @@ function timeAgo(date) {
 }
 
 function main(e) {
-    debugger
+    
     var response = {
         noError: true
     }
@@ -323,13 +322,20 @@ function main(e) {
                 throw new Error("No se ha recibido ningun mensaje de al menos 20 minutos a "+userData.emailToCheck)
             }
 
+            
 
             var estimatedTimeAgo = dateObj.toLocaleTimeString('es-CO', { hour12: true }) + " - " + dateObj.toLocaleDateString("es-CO") + "\n" + timeAgo(dateObj)
             response["estimatedTimeAgo"] = estimatedTimeAgo;
 
+            var context = {
+                to: userData.emailToCheck,
+                from: ultimoMensaje.getFrom(),
+                profileName: null,
+                keyword: "",
+            }
             //console.log(estimatedTimeAgo)
-            var codeResponse = extractCode(htmlText, subject);
-            console.log(codeResponse)
+            var codeResponse = extractCode(htmlText, subject, context);
+           // console.log(codeResponse)
             response = { ...response, ...codeResponse, contact: theContact };
         }
 
