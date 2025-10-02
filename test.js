@@ -157,53 +157,6 @@ function verifyNetflix(root, respuesta, context) {
         return true;
     }
 
-function verifyDisney(root, respuesta, context) {
-  const regexSixNumberMax = /^\d{6}$/g;
-
-  // 1. Validar remitente
-  if (!context?.from?.includes("disneyplus@trx.mail2.disneyplus.com")) {
-    return respuesta;
-  }
-
-  // 2. Buscar tabla
-  const table = root.querySelector("table.module_1 table.module");
-  if (!table) {
-    console.log("No se encontró tabla Disney");
-    return respuesta;
-  }
-
-  // 3. Buscar filas y tds con chequeo seguro
-  const rows = table.querySelectorAll("tr") || [];
-  const tds = [];
-  rows.forEach(tr => {
-    const td = tr.querySelector("td");
-    if (td) tds.push(td);
-  });
-
-  // 4. Desestructurar con defaults
-  const [labelElement = null, , codeElement = null] = tds;
-
-  if (labelElement && codeElement) {
-    const code = codeElement?.innerText?.trim();
-    const labelText = labelElement?.innerText?.trim();
-    const isLabelCodigo = labelText === "Tu código de acceso único para Disney+";
-
-    if (code?.match(regexSixNumberMax) && isLabelCodigo) {
-      context.keyword = "disney";
-      console.log("Es de código de acceso único para Disney+");
-      return {
-        ...respuesta,
-        noError: true,
-        code,
-        about: "Código de acceso único Disney Plus (Válido por 15 min)"
-      };
-    }
-  }
-
-  console.log("No es de Disney+");
-  return respuesta;
-}
-
 
     //COMPROBAR SI ES PARA ACTUALIZAR HOGAR
     var linkElement = root.querySelector('a[href^="https://www.netflix.com/account/update-primary-location?"]');
@@ -249,6 +202,53 @@ function verifyDisney(root, respuesta, context) {
     return false;
 
 
+}
+
+function verifyDisney(root, respuesta, context) {
+  const regexSixNumberMax = /^\d{6}$/g;
+
+  // 1. Validar remitente
+  if (!context?.from?.includes("disneyplus@trx.mail2.disneyplus.com")) {
+    return respuesta;
+  }
+
+  // 2. Buscar tabla
+  const table = root.querySelector("table.module_1 table.module");
+  if (!table) {
+    console.log("No se encontró tabla Disney");
+    return respuesta;
+  }
+
+  // 3. Buscar filas y tds con chequeo seguro
+  const rows = table.querySelectorAll("tr") || [];
+  const tds = [];
+  rows.forEach(tr => {
+    const td = tr.querySelector("td");
+    if (td) tds.push(td);
+  });
+
+  // 4. Desestructurar con defaults
+  const [labelElement = null, , codeElement = null] = tds;
+
+  if (labelElement && codeElement) {
+    const code = codeElement?.innerText?.trim();
+    const labelText = labelElement?.innerText?.trim();
+    const isLabelCodigo = labelText === "Tu código de acceso único para Disney+";
+
+    if (code?.match(regexSixNumberMax) && isLabelCodigo) {
+      context.keyword = "disney";
+      console.log("Es de código de acceso único para Disney+");
+      return {
+        ...respuesta,
+        noError: true,
+        code,
+        about: "Código de acceso único Disney Plus (Válido por 15 min)"
+      };
+    }
+  }
+
+  console.log("No es de Disney+");
+  return respuesta;
 }
 
 function extractCode(htmlText, subject, context={}) {
