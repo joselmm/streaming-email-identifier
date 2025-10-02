@@ -157,6 +157,57 @@ function verifyNetflix(root, respuesta, context) {
         return true;
     }
 
+function verifyDisney(root, respuesta, context) {
+  //console.log("comprobando si es de yt")
+  var regexSixNumberMax = /^\d{6}$/g;
+
+  if (context?.from?.includes("disneyplus@trx.mail2.disneyplus.com") === false) {
+    return respuesta;
+  }
+
+  //if(subject.includes("Recuperación de contraseña") || subject.includes("Password recovery") ) return respuesta;
+  //3 factores para identifar el correo
+  const table = root.querySelector("table.module_1 table.module")
+  var tds=[];
+
+  const rows = table.querySelectorAll("tr");
+  console.log(rows.length)
+  rows.forEach(tr => {
+    tds.push(tr.querySelector("td"));
+    //console.log(tds.map(td => td.text));
+  });
+
+
+
+  var [labelElement, undefined, codeElement] = tds;
+
+  //var labelElement = root.querySelector('table.module_1 table.module tbody > tr > td[style="padding: 45px 45px 20px 45px;font-size: 35px; font-weight:600; color:#252526; font-family:\'Noto Sans Display\', Arial, sans-serif;; letter-spacing:normal; line-height:43px; mso-line-height-rule: exactly;"]');
+  //var codeElement = root.querySelector('table.module_1 table.module tbody > tr > td[style="padding: 25px 45px 25px 45px;font-size: 28px; font-weight:600; color:#252526; font-family:\'Noto Sans Display\', Arial, sans-serif;; letter-spacing:4px; line-height:38px; mso-line-height-rule: exactly;"]')
+
+
+  if (codeElement && labelElement) {
+    var code = codeElement?.innerText?.trim();
+    var labelText = labelElement?.innerText?.trim();
+    var isLabelCodigo = labelText.trim() === "Tu código de acceso único para Disney+";
+    if (code?.match(regexSixNumberMax) && isLabelCodigo) {
+      context.keyword = "disney";
+
+      console.log("Es de código de acceso único para Disney+");
+      respuesta.noError = true;
+      respuesta.code = code;
+      respuesta.about = 'Codigo de acceso único Disney Plus (Valido por 15 Min)'
+
+      return respuesta
+    }
+
+  }
+
+
+
+  console.log("no es de Disney+");
+  return respuesta;
+}
+
     //COMPROBAR SI ES PARA ACTUALIZAR HOGAR
     var linkElement = root.querySelector('a[href^="https://www.netflix.com/account/update-primary-location?"]');
     if (linkElement) {
@@ -228,6 +279,10 @@ function extractCode(htmlText, subject, context={}) {
     if (respuesta.noError === true) {
         return respuesta;
     }
+
+    //VERIFICAR SI ES DE DISNEY
+    verifyDisney(root, respuesta, context);
+    
     //VERIFICAR SI ES DE NETFLIX
     verifyNetflix(root, respuesta, context);
     if (respuesta.noError === true) {
