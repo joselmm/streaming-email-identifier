@@ -238,12 +238,12 @@ function verifyDisney(root, respuesta, context) {
     if (code?.match(regexSixNumberMax) && isLabelCodigo) {
       context.keyword = "disney";
       console.log("Es de código de acceso único para Disney+");
-      return {
-        ...respuesta,
-        noError: true,
-        code,
-        about: "Código de acceso único Disney Plus (Válido por 15 min)"
-      };
+    
+      respuesta.noError = true;
+      respuesta.code = code;
+      respuesta.about = "Código de acceso único Disney Plus (Válido por 15 min)";
+    
+      return respuesta;
     }
   }
 
