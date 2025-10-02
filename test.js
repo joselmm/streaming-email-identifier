@@ -279,6 +279,9 @@ function extractCode(htmlText, subject, context={}) {
 
     //VERIFICAR SI ES DE DISNEY
     verifyDisney(root, respuesta, context);
+    if (respuesta.noError === true) {
+        return respuesta;
+    }
     
     //VERIFICAR SI ES DE NETFLIX
     verifyNetflix(root, respuesta, context);
