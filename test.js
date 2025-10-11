@@ -1,6 +1,49 @@
 var theContact = "";
 const regexEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 
+function verifyChatGpt(root, respuesta, subject, context) {
+  const regexSixNumberMax = /^\d{6}$/g;
+
+  // 1. Validar remitente
+  if (!context?.from?.includes("noreply@tm.openai.com")) {
+    return respuesta;
+  }
+
+  if (!(subject?.includes("Your ChatGPT code is") || subject?.toLowerCase().includes("tu código chatgpt es"))) return respuesta;
+
+
+  // Buscar todos los <h1>
+  const h1s = root.querySelectorAll('h1');
+  var theCodeH1 = null;
+
+  for (var h1 of h1s) {
+
+    if (h1.innerText.match(regexSixNumberMax)) {
+      theCodeH1 = h1;
+      break
+    }
+  }
+
+  if (theCodeH1 === null) {
+    return respuesta
+  }else{
+    
+  }
+
+
+
+  const code = theCodeH1.innerText;
+
+
+  context.keyword = "disney";
+  console.log("Es de código de acceso único para ChatGPT");
+  respuesta.noError = true;
+  respuesta.code = code;
+  respuesta.about = "Código de acceso único ChatGPT (Válido por 15 min)";
+  return respuesta
+
+}
+
 function verifyAmazon(root, respuesta, subject, context) {
 
     if (context?.from?.includes("account-update@amazon.com") === false) {
@@ -300,6 +343,14 @@ function extractCode(htmlText, subject, context={}) {
         return respuesta;
     }
 
+    //VERIFICAR SI ES DE CHATGPT
+    console.log("Probando si es de chatgpt")
+    verifyChatGpt(root, respuesta, subject, context);
+    if (respuesta.noError === true) {
+        return respuesta;
+    }else{
+        console.log("No es de chatgpt")
+    }
     return respuesta
 }
 
