@@ -1,5 +1,5 @@
 var theContact = "";
-const regexEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+var regexEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 
 function verifyChatGpt(root, respuesta, subject, context) {
   const regexSixNumberMax = /^\d{6}$/g;
@@ -136,7 +136,7 @@ function verifyMax(root, respuesta, subject, context) {
     
     //if(subject.includes("Recuperación de contraseña") || subject.includes("Password recovery") ) return respuesta;
     //FORMATO CODIGO DE INICIO DE SESION EN LA WEB CON MAX:
-    var emailHtml = root.querySelector("tr:nth-child(1) > td > p > b");
+    var emailHtml = root.querySelector("tr:nth-child(1) > td > p > span > b");
 
     if (emailHtml?.innerText?.trim()?.match(regexSixNumberMax)?.length > 0 && (subject.includes("Urgente: Tu código de un solo uso de HBO Max") || subject.includes("Time Sensitive: Your One-Time HBO Max Code"))) {
         console.log("Es de max codigo de iniciar sesion");
@@ -144,6 +144,7 @@ function verifyMax(root, respuesta, subject, context) {
         respuesta.noError = true;
         respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberMax)[0];
         respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en Hbo Max'
+        debugger
         return respuesta
     }
 
