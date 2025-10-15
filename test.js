@@ -46,9 +46,6 @@ function verifyChatGpt(root, respuesta, subject, context) {
 
 function verifyAmazon(root, respuesta, subject, context) {
 
-    if (context?.from?.includes("account-update@amazon.com") === false) {
-      return respuesta;
-    }
     
     var regexSixNumberAmazon = /^\d{6}$/g;
     if(subject.includes("Recuperación de contraseña") || subject.includes("Password recovery") ) return respuesta;
@@ -68,6 +65,7 @@ function verifyAmazon(root, respuesta, subject, context) {
     //FORMATO PAGINA PRIMEVIDEO.COM
     var emailHtml = root.querySelector("body table > tbody > tr > td > table > tbody > tr:nth-child(6) > td > p");
     //var e=emailHtml.innerText;
+   
     if (emailHtml?.innerText?.trim()?.match(regexSixNumberAmazon)?.length > 0) {
         context.keyword = "prime";
         
@@ -75,6 +73,7 @@ function verifyAmazon(root, respuesta, subject, context) {
         respuesta.noError = true;
         respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberAmazon)[0];
         respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en Prime Video'
+        
         return respuesta
     }
 
