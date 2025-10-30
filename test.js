@@ -237,7 +237,7 @@ function verifyNetflix(root, respuesta, context) {
         respuesta.noError=true;
         respuesta.link = link;
         respuesta.about = "Enlace de Aprobacion en TV - Netflix\n(Valido por 15 min)";
-        
+        context.netflixLinkTv=true;
       }
 
     console.log("NO continuar con netflix")
