@@ -1,7 +1,30 @@
 var theContact = "";
 var regexEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 
-function verifyChatGpt(root, respuesta, subject, context) {
+
+function verifyChatGPT(root, respuesta, subject, context) {
+
+  var chatgptCodeRegex = /\d{6}/g;
+  if (!(subject.includes("Your ChatGPT code is") || subject.includes("Tu código de ChatGPT es"))) return respuesta;
+  //FORMATO APP PRIMEVIDEO:
+  var codigo = subject.match(chatgptCodeRegex);
+
+  if (codigo === null) return respuesta;
+
+  var codigo = codigo[0];
+
+  respuesta.noError = true;
+  respuesta.code = codigo;
+  context.keyword = "chatgpt";
+  respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en ChatGPT'
+  console.log("Es de ChatGPT codigo")
+
+  debugger
+
+  return respuesta
+
+}
+/* function verifyChatGpt(root, respuesta, subject, context) {
   const regexSixNumberMax = /^\d{6}$/g;
 
   // 1. Validar remitente
@@ -35,14 +58,14 @@ function verifyChatGpt(root, respuesta, subject, context) {
   const code = theCodeH1.innerText;
 
 
-  context.keyword = "disney";
+  context.keyword = "chatgpt";
   console.log("Es de código de acceso único para ChatGPT");
   respuesta.noError = true;
   respuesta.code = code;
   respuesta.about = "Código de acceso único ChatGPT (Válido por 15 min)";
   return respuesta
 
-}
+} */
 
 function verifyAmazon(root, respuesta, subject, context) {
 
