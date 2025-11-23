@@ -2,7 +2,7 @@ var theContact = "";
 var regexEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 
 
-function verifyChatGPT(root, respuesta, subject, context) {
+function verifyChatGpt(root, respuesta, subject, context) {
 
   var chatgptCodeRegex = /\d{6}/g;
   if (!(subject.includes("Your ChatGPT code is") || subject.includes("Tu código de ChatGPT es"))) return respuesta;
