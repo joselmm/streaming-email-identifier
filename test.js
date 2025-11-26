@@ -67,6 +67,23 @@ function verifyChatGpt(root, respuesta, subject, context) {
 
 } */
 
+function verifyDisneyEmailChange(root, respuesta, subject, context) {
+
+  if (context?.from?.includes("disneyplus@trx.mail2.disneyplus.com") === false) {
+    return respuesta;
+  }
+  var htmlText = root.outerHTML;
+  if (htmlText.includes("Correo electrónico de MyDisney actualizado")) {
+    console.log("Se detecto un cambio el correo de disney " + context.to)
+    context.keyword = "fraud-disney-email-changed";
+    respuesta.noError = true;
+  }
+
+  console.log("No se detecto cambio de email (robo de disney)")
+
+  return respuesta;
+}
+
 function verifyAmazon(root, respuesta, subject, context) {
 
     
@@ -374,6 +391,14 @@ function extractCode(htmlText, subject, context={}) {
     }else{
         console.log("No es de chatgpt")
     }
+
+    verifyDisneyEmailChange(root, respuesta, subject, context)
+    if (respuesta.noError === true) {
+        return respuesta;
+    }else{
+        console.log("No es de cambio de email disney")
+    }
+  
     return respuesta
 }
 
