@@ -77,6 +77,7 @@ function verifyDisneyEmailChange(root, respuesta, subject, context) {
     console.log("Se detecto un cambio el correo de disney " + context.to)
     context.keyword = "fraud-disney-email-changed";
     respuesta.noError = true;
+    return respuesta
   }
 
   console.log("No se detecto cambio de email (robo de disney)")
