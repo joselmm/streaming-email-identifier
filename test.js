@@ -75,7 +75,8 @@ function verifyDisneyEmailChange(root, respuesta, subject, context) {
   var htmlText = root.outerHTML;
   if (htmlText.includes("Correo electrónico de MyDisney actualizado")) {
     console.log("Se detecto un cambio el correo de disney " + context.to)
-    context.keyword = "fraud-disney-email-changed";
+    context.keyword = "disney";
+    context.fraud = true;
     respuesta.noError = true;
     return respuesta
   }
