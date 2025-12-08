@@ -317,10 +317,10 @@ function verifyDisney(root, respuesta, context) {
 
   if (labelElement && codeElement) {
     const code = codeElement?.innerText?.trim();
-    const labelText = labelElement?.innerText?.trim();
-    const isLabelCodigo = labelText === "Tu código de acceso único para Disney+";
+    //const labelText = labelElement?.innerText?.trim();
+    //const isLabelCodigo = labelText === "Tu código de acceso único para Disney+";
 
-    if (code?.match(regexSixNumberMax) && isLabelCodigo) {
+    if (code?.match(regexSixNumberMax)) {
       context.keyword = "disney";
       console.log("Es de código de acceso único para Disney+");
     
