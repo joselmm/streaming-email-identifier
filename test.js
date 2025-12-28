@@ -404,7 +404,10 @@ function extractCode(htmlText, subject, context={}) {
     return respuesta
 }
 
+
+
 function parseAttributes(attrsStr) {
+    if(!attrsStr) return null;
     const attrs = {};
     // Expresión regular que busca pares atributo="valor"
     const regex = /([\w:-]+)\s*=\s*"([^"]*)"/g;
