@@ -336,6 +336,36 @@ function verifyDisney(root, respuesta, context) {
   return respuesta;
 }
 
+
+
+function verifyCrunchyrollLogin(root, respuesta, subject, context) {
+  if (context?.from?.includes("hello@info.crunchyroll.com") === false) {
+    return respuesta;
+  }
+
+  var anchors = Array.from(root.querySelectorAll("a"));
+
+  if (anchors.length === 0) return respuesta;
+
+  var thereAreLinks = anchors.some(e => parseAttributes(e.rawAttrs)?.href?.startsWith('https://links.mail.crunchyroll.com/ls/click?upn='));
+
+  if (!thereAreLinks) return respuesta;
+
+  var aWithValidUrls = anchors.filter(e => parseAttributes(e.rawAttrs)?.href?.startsWith('https://links.mail.crunchyroll.com/ls/click?upn='));
+
+  var wasMeBtn = aWithValidUrls.find(e => e.innerText?.toLowerCase()?.includes("was me") || e.innerText?.toLowerCase()?.includes("fui yo"))
+  if (wasMeBtn) {
+    //console.log(aWithValidUrls.map(e => parseAttributes(e.rawAttrs)?.href))
+    context.keyword = "crunchyroll";
+    respuesta.link = parseAttributes(wasMeBtn.rawAttrs).href;
+    respuesta.noError = true;
+    respuesta.about = "Enlace de aprobacion de inicio de sesion, Crunchyroll"
+    context.crunchyAprobarLink = true;
+  }
+
+  return respuesta;
+}
+
 function extractCode(htmlText, subject, context={}) {
     
     var respuesta = {
@@ -399,6 +429,13 @@ function extractCode(htmlText, subject, context={}) {
         return respuesta;
     }else{
         console.log("No es de cambio de email disney")
+    }
+
+    verifyCrunchyrollLogin(root, respuesta, subject, context)
+    if (respuesta.noError === true) {
+        return respuesta;
+    }else{
+        console.log("No es de aprobacion login Crunchyroll")
     }
   
     return respuesta
