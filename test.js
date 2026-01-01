@@ -560,9 +560,9 @@ function main(e) {
     // 8️⃣ Validar antigüedad del correo (20 minutos)
     var dateObj = mensajeUsado.getDate();
 
-    if (Date.now() - dateObj.getTime() > (1000 * 60 * 20)) {
+    /* if (Date.now() - dateObj.getTime() > (1000 * 60 * 20)) {
       throw new Error("El último código encontrado ya expiró");
-    }
+    } */
 
     // 9️⃣ Tiempo estimado
     response.estimatedTimeAgo =
