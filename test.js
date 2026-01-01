@@ -479,92 +479,74 @@ function timeAgo(date) {
 }
 
 function main(e) {
-
-  var response = {
-    noError: true
-  };
+  var response = { noError: true };
 
   try {
-
     // 1️⃣ Leer datos del request
     var userData = JSON.parse(e.postData.contents);
 
     // 2️⃣ Verificar contacto y correo
     var verify = VerifyContactAndEmail(userData);
-    if (verify !== true) {
-      throw new Error(verify);
-    }
+    if (verify !== true) throw new Error(verify);
 
     // 3️⃣ Buscar últimos 5 hilos que coincidan con el correo
-    var threads = GmailApp.search(
-      userData.emailToCheck,
-      0,
-      5
-    );
+    var threads = GmailApp.search(userData.emailToCheck, 0, 5);
 
-    var messages = [];
-    var email = userData.emailToCheck.toLowerCase();
-
-    // 4️⃣ Aplanar mensajes y filtrar (TO o BODY)
-    threads.forEach(thread => {
-      thread.getMessages().forEach(msg => {
-        var to = (msg.getTo() || "").toLowerCase();
-        var body = (msg.getPlainBody() || "").toLowerCase();
-
-        if (to.includes(email) || body.includes(email)) {
-          messages.push(msg);
-        }
-      });
-    });
-
-    if (messages.length === 0) {
-      throw new Error("No se encontraron mensajes para " + userData.emailToCheck);
+    if (threads.length === 0) {
+      throw new Error("No se encontraron hilos para " + userData.emailToCheck);
     }
-
-    // 5️⃣ Ordenar por fecha (viejo → nuevo)
-    messages.sort((a, b) => a.getDate() - b.getDate());
-
-    // 6️⃣ Tomar máximo los últimos 5 mensajes reales
-    var ultimosCinco = messages.slice(-5);
 
     var codeResponse = null;
     var mensajeUsado = null;
 
-    // 7️⃣ Iterar del más nuevo al más viejo y detener al encontrar resultado
-    for (var i = ultimosCinco.length - 1; i >= 0; i--) {
-      var msg = ultimosCinco[i];
+    // 4️⃣ Iterar hilos del más reciente al más viejo
+    threads.sort((a, b) => b.getLastMessageDate() - a.getLastMessageDate());
 
-      var htmlText = msg.getBody();
-      var subject = msg.getSubject();
+    for (var t = 0; t < threads.length; t++) {
+      var thread = threads[t];
+      var messages = thread.getMessages();
 
-      var context = {
-        to: userData.emailToCheck,
-        from: msg.getFrom(),
-        profileName: null,
-        keyword: ""
-      };
+      // 5️⃣ Tomar máximo los 5 últimos mensajes de cada hilo
+      var lastFive = messages.slice(-5); // últimos 5 (del más viejo al más reciente)
+      lastFive.reverse(); // invertir para iterar del más reciente al más viejo
 
-      var result = extractCode(htmlText, subject, context);
+      // 6️⃣ Iterar los mensajes
+      for (var m = 0; m < lastFive.length; m++) {
+        var msg = lastFive[m];
 
-      if (result && result.noError === true) {
-        codeResponse = result;
-        mensajeUsado = msg;
-        break; // 🚨 detener al encontrar código o link
+        var htmlText = msg.getBody();
+        var subject = msg.getSubject();
+
+        var context = {
+          to: userData.emailToCheck,
+          from: msg.getFrom(),
+          profileName: null,
+          keyword: ""
+        };
+
+        var result = extractCode(htmlText, subject, context);
+
+        if (result && result.noError === true) {
+          codeResponse = result;
+          mensajeUsado = msg;
+          break; // 🚨 Detener al encontrar código
+        }
       }
+
+      if (codeResponse) break; // 🚨 Salir de la iteración de hilos
     }
 
     if (!codeResponse) {
       throw new Error("No se encontró ningún código o enlace válido en los últimos correos");
     }
 
-    // 8️⃣ Validar antigüedad del correo (20 minutos)
+    // 7️⃣ Validar antigüedad del correo (20 minutos)
     var dateObj = mensajeUsado.getDate();
-
-    if (Date.now() - dateObj.getTime() > (1000 * 60 * 20)) {
+    if (Date.now() - dateObj.getTime() > 1000 * 60 * 20) {
       throw new Error("El último código encontrado ya expiró");
     }
 
-    // 9️⃣ Tiempo estimado
+    // 8️⃣ Tiempo estimado
     response.estimatedTimeAgo =
       dateObj.toLocaleTimeString('es-CO', { hour12: true }) +
       " - " +
@@ -572,7 +554,7 @@ function main(e) {
       "\n" +
       timeAgo(dateObj);
 
-    // 🔟 Unir respuesta final
+    // 9️⃣ Respuesta final
     response = {
       ...response,
       ...codeResponse,
@@ -590,8 +572,6 @@ function main(e) {
     .createTextOutput(JSON.stringify(response))
     .setMimeType(ContentService.MimeType.JSON);
 }
-
-
 
 function VerifyContactAndEmail(userData) {
     try {
