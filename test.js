@@ -478,84 +478,119 @@ function timeAgo(date) {
     return 'hace unos segundos';
 }
 
-function main(e) {
-    
-    var response = {
-        noError: true
+function main(e) {function main(e) {
+
+  var response = {
+    noError: true
+  };
+
+  try {
+
+    // 1️⃣ Leer datos del request
+    var userData = JSON.parse(e.postData.contents);
+
+    // 2️⃣ Verificar contacto y correo
+    var verify = VerifyContactAndEmail(userData);
+    if (verify !== true) {
+      throw new Error(verify);
     }
-    try {
 
-        var userData = JSON.parse(e.postData.contents);
-        /* " || "maria7252.zuluaga@gmail.com", */
-        /* var userData = {
-            "emailToCheck":"yorvenivegapadilla@gmail.com",
-            "contact":"3226912442"
-        } */
-        var verify = VerifyContactAndEmail(userData);
-        if (verify !== true) {
-            throw new Error(verify);
+    // 3️⃣ Buscar últimos 5 hilos que coincidan con el correo
+    var threads = GmailApp.search(
+      "to:" + userData.emailToCheck,
+      0,
+      5
+    );
+
+    var messages = [];
+    var email = userData.emailToCheck.toLowerCase();
+
+    // 4️⃣ Aplanar mensajes y filtrar (TO o BODY)
+    threads.forEach(thread => {
+      thread.getMessages().forEach(msg => {
+        var to = (msg.getTo() || "").toLowerCase();
+        var body = (msg.getPlainBody() || "").toLowerCase();
+
+        if (to.includes(email) || body.includes(email)) {
+          messages.push(msg);
         }
-        //var threads = GmailApp.search('from: <'+correo+'> is:unread', 0, 1); // Obtener el hilo de correo electrónico más recientes del remitente especificado
-        var threads = GmailApp.search("to:"+userData.emailToCheck, 0, 1); // Obtener el hilo de correo electrónico más recientes del remitente especificado
-        var messages = [];
-        threads.forEach(function (thread) {
-            var threadMessages = thread.getMessages();
-            threadMessages.forEach(function (message) {
-                messages.push(message);
-            });
-        });
+      });
+    });
 
-        if (messages.length === 0) {
-            response.noError = false;
-            throw new Error("No se encontraron mensajes para " + userData.emailToCheck + " y " + userData.contact)
-
-        } else {
-            var mensajesFiltrados = messages.filter(function(msg) {
-              return msg.getTo().indexOf(userData.emailToCheck) !== -1;
-            });
-
-            var ultimoMensaje = mensajesFiltrados[mensajesFiltrados.length - 1];
-            var htmlText = ultimoMensaje.getBody();
-            var subject = ultimoMensaje.getSubject();
-
-
-            var dateObj = ultimoMensaje.getDate();
-
-
-
-            // VERIFICAR QUE EL MENSAJE SEA DE AL MENOS 20 MINUTOS DE ANTIGUEDAD
-               
-            if(Date.now() - dateObj.getTime()> (1000 * 1 * 60 * 20)){
-                //SI EL ULTIMO EMAIL ES DE HACE MAS DE 20 MINUTOS,NO SE TOMARA EN CUENTA
-                console.log("No hay mensajes de los ulti")
-                throw new Error("No se ha recibido ningun mensaje de al menos 20 minutos a "+userData.emailToCheck)
-            }
-
-            
-
-            var estimatedTimeAgo = dateObj.toLocaleTimeString('es-CO', { hour12: true }) + " - " + dateObj.toLocaleDateString("es-CO") + "\n" + timeAgo(dateObj)
-            response["estimatedTimeAgo"] = estimatedTimeAgo;
-
-            var context = {
-                to: userData.emailToCheck,
-                from: ultimoMensaje.getFrom(),
-                profileName: null,
-                keyword: "",
-            }
-            //console.log(estimatedTimeAgo)
-            var codeResponse = extractCode(htmlText, subject, context);
-           // console.log(codeResponse)
-            response = { ...response, ...codeResponse, contact: theContact };
-        }
-
-    } catch (err) {
-        console.log(err)
-        response.message = err.message;
-        response.noError = false;
-        response.contact = theContact;
+    if (messages.length === 0) {
+      throw new Error("No se encontraron mensajes para " + userData.emailToCheck);
     }
-    return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
+
+    // 5️⃣ Ordenar por fecha (viejo → nuevo)
+    messages.sort((a, b) => a.getDate() - b.getDate());
+
+    // 6️⃣ Tomar máximo los últimos 5 mensajes reales
+    var ultimosCinco = messages.slice(-5);
+
+    var codeResponse = null;
+    var mensajeUsado = null;
+
+    // 7️⃣ Iterar del más nuevo al más viejo y detener al encontrar resultado
+    for (var i = ultimosCinco.length - 1; i >= 0; i--) {
+      var msg = ultimosCinco[i];
+
+      var htmlText = msg.getBody();
+      var subject = msg.getSubject();
+
+      var context = {
+        to: userData.emailToCheck,
+        from: msg.getFrom(),
+        profileName: null,
+        keyword: ""
+      };
+
+      var result = extractCode(htmlText, subject, context);
+
+      if (result && result.noError === true) {
+        codeResponse = result;
+        mensajeUsado = msg;
+        break; // 🚨 detener al encontrar código o link
+      }
+    }
+
+    if (!codeResponse) {
+      throw new Error("No se encontró ningún código o enlace válido en los últimos correos");
+    }
+
+    // 8️⃣ Validar antigüedad del correo (20 minutos)
+    var dateObj = mensajeUsado.getDate();
+
+    if (Date.now() - dateObj.getTime() > (1000 * 60 * 20)) {
+      throw new Error("El último código encontrado ya expiró");
+    }
+
+    // 9️⃣ Tiempo estimado
+    response.estimatedTimeAgo =
+      dateObj.toLocaleTimeString('es-CO', { hour12: true }) +
+      " - " +
+      dateObj.toLocaleDateString("es-CO") +
+      "\n" +
+      timeAgo(dateObj);
+
+    // 🔟 Unir respuesta final
+    response = {
+      ...response,
+      ...codeResponse,
+      contact: theContact
+    };
+
+  } catch (err) {
+    console.log(err);
+    response.noError = false;
+    response.message = err.message;
+    response.contact = theContact;
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify(response))
+    .setMimeType(ContentService.MimeType.JSON);
 }
+
 
 
 function VerifyContactAndEmail(userData) {
