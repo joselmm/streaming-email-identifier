@@ -478,7 +478,7 @@ function timeAgo(date) {
     return 'hace unos segundos';
 }
 
-function main(e) {function main(e) {
+function main(e) {
 
   var response = {
     noError: true
