@@ -497,7 +497,7 @@ function main(e) {function main(e) {
 
     // 3️⃣ Buscar últimos 5 hilos que coincidan con el correo
     var threads = GmailApp.search(
-      "to:" + userData.emailToCheck,
+      userData.emailToCheck,
       0,
       5
     );
