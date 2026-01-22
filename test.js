@@ -207,7 +207,7 @@ function verifyNetflix(root, respuesta, context) {
     if (!bodyHtml?.toLowerCase()?.includes("netflix")) return respuesta
 
     var codeContainer = root.querySelector("table > tbody > tr > td > table > tbody > tr:nth-child(2) > td > table:nth-child(3) > tbody > tr > td");
-    if (codeContainer && (bodyHtml.includes("Ingresa este código para iniciar sesión") || bodyHtml.includes("Enter this code to sign in"))) {
+    if (codeContainer && (bodyHtml.includes("Ingresa este código para iniciar sesión") || bodyHtml.includes("Enter this code to sign in") || bodyHtml.includes("Escribe este código para iniciar sesión"))) {
         console.log("Es codigo de inicio de sesión")
         
         respuesta.noError = true;
