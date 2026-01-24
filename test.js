@@ -167,7 +167,7 @@ function verifyYoutube(root, respuesta, context) {
 }
 
 function verifyMax(root, respuesta, subject, context) {
-    if (context?.from?.includes("no-reply@alerts.hbomax.com") === false) {
+    if (context?.from?.includes("no-reply@alerts.hbomax.com") === false || context?.from?.includes("hbomax@service.hbomax.com") === false) {
       return respuesta;
     }
     
