@@ -167,7 +167,8 @@ function verifyYoutube(root, respuesta, context) {
 }
 
 function verifyMax(root, respuesta, subject, context) {
-    if (context?.from?.includes("no-reply@alerts.hbomax.com") === false || context?.from?.includes("hbomax@service.hbomax.com") === false) {
+
+    if (!(context?.from?.includes("no-reply@alerts.hbomax.com") || context?.from?.includes("hbomax@service.hbomax.com"))) {
       return respuesta;
     }
     
@@ -185,7 +186,7 @@ function verifyMax(root, respuesta, subject, context) {
         respuesta.noError = true;
         respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberMax)[0];
         respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en Hbo Max'
-        debugger
+        
         return respuesta
     }
 
