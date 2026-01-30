@@ -196,6 +196,35 @@ function verifyMax(root, respuesta, subject, context) {
     return respuesta;
 }
 
+function verifyMaxPassReset(root, respuesta, subject, context) {
+
+    if (!(context?.from?.includes("no-reply@alerts.hbomax.com")) {
+      return respuesta;
+    }
+    
+    context.keyword = "max-reset-pass";
+
+    var regexSixNumberMax = /^\d{6}$/g;
+    
+    if(!(subject.includes("Tu enlace para restablecer tu contraseña requerido a las") || subject.includes("Your HBO Max Password Reset Link as of") )) return respuesta;
+    //FORMATO CODIGO DE INICIO DE SESION EN LA WEB CON MAX:
+   var btnElement = root.querySelector('a[href^="https://auth.hbomax.com/set-new-password?passwordResetToken="]');
+
+    if (btnElement) {
+        console.log("Es de enlace para cambiar contraseña HBOMAX");
+        
+        respuesta.noError = true;
+        respuesta.link = parseAttributes(btnElement)?.href || "";
+        respuesta.about = 'Enlace para cambiar contraseña Hbomax'
+        
+        return respuesta
+    }
+
+    console.log("no es de Max");
+    return respuesta;
+}
+
+
 function verifyNetflix(root, respuesta, context) {
     context.keyword = "netflix";
 
@@ -392,11 +421,21 @@ function extractCode(htmlText, subject, context={}) {
     if (respuesta.noError === true) {
         return respuesta;
     }
+    if (respuesta.noError === true) {
+        return respuesta;
+    }else{
+        console.log("No es de OTP signin prime")
+    }
 
     //VERIFICAR SI ES DE DISNEY
     verifyDisney(root, respuesta, context);
     if (respuesta.noError === true) {
         return respuesta;
+    }
+    if (respuesta.noError === true) {
+        return respuesta;
+    }else{
+        console.log("No es de OTP Disney")
     }
     
     //VERIFICAR SI ES DE NETFLIX
@@ -404,10 +443,20 @@ function extractCode(htmlText, subject, context={}) {
     if (respuesta.noError === true) {
         return respuesta;
     }
+  if (respuesta.noError === true) {
+        return respuesta;
+    }else{
+        console.log("No es de OTP Netflix")
+    }
 
     verifyMax(root, respuesta, subject, context);
     if (respuesta.noError === true) {
         return respuesta;
+    }
+    if (respuesta.noError === true) {
+        return respuesta;
+    }else{
+        console.log("No es de OTP hbo max")
     }
 
      //VERIFICAR SI ES DE YT
@@ -415,9 +464,14 @@ function extractCode(htmlText, subject, context={}) {
     if (respuesta.noError === true) {
         return respuesta;
     }
+  if (respuesta.noError === true) {
+        return respuesta;
+    }else{
+        console.log("No es de youtube")
+    }
 
     //VERIFICAR SI ES DE CHATGPT
-    console.log("Probando si es de chatgpt")
+    
     verifyChatGpt(root, respuesta, subject, context);
     if (respuesta.noError === true) {
         return respuesta;
@@ -437,6 +491,13 @@ function extractCode(htmlText, subject, context={}) {
         return respuesta;
     }else{
         console.log("No es de aprobacion login Crunchyroll")
+    }
+
+    verifyMaxPassReset(root, respuesta, subject, context);
+   if (respuesta.noError === true) {
+        return respuesta;
+    }else{
+        console.log("No es de enlace de max reset password")
     }
   
     return respuesta
