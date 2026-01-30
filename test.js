@@ -202,7 +202,7 @@ function verifyMaxPassReset(root, respuesta, subject, context) {
       return respuesta;
     }
     
-    context.keyword = "max-reset-pass";
+    context.keyword = "max";
 
     var regexSixNumberMax = /^\d{6}$/g;
     
@@ -211,6 +211,7 @@ function verifyMaxPassReset(root, respuesta, subject, context) {
    var btnElement = root.querySelector('a[href^="https://auth.hbomax.com/set-new-password?passwordResetToken="]');
 
     if (btnElement) {
+        context.sendJustIf='{max-reset-pass}';
         console.log("Es de enlace para cambiar contraseña HBOMAX");
         
         respuesta.noError = true;
@@ -351,6 +352,7 @@ function verifyDisney(root, respuesta, context) {
     //const isLabelCodigo = labelText === "Tu código de acceso único para Disney+";
 
     if (code?.match(regexSixNumberMax)) {
+      context.sendJustIf="{enviar_codigos_disney}"
       context.keyword = "disney";
       console.log("Es de código de acceso único para Disney+");
     
