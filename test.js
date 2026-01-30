@@ -198,7 +198,7 @@ function verifyMax(root, respuesta, subject, context) {
 
 function verifyMaxPassReset(root, respuesta, subject, context) {
 
-    if (!(context?.from?.includes("no-reply@alerts.hbomax.com")) {
+    if (!(context?.from?.includes("no-reply@alerts.hbomax.com"))) {
       return respuesta;
     }
     
