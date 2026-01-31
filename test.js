@@ -364,7 +364,7 @@ function verifyCrunchyPassReset(root, respuesta, subject, context) {
     return respuesta;
   }
 
-  context.keyword = "crunchy-reset-pass";
+  context.keyword = "crunchyroll";
 
   const SUBJECT_MATCHES = [
     "Restablece tu contraseña de Crunchyroll",
