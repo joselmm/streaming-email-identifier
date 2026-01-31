@@ -360,32 +360,47 @@ function verifyCrunchyrollLogin(root, respuesta, subject, context) {
 
 function verifyCrunchyPassReset(root, respuesta, subject, context) {
 
-  if (!(context?.from?.includes("hello@info.crunchyroll.com"))) {
+  if (!context?.from?.includes("hello@info.crunchyroll.com")) {
     return respuesta;
   }
 
   context.keyword = "crunchy-reset-pass";
 
-  if (!(subject.includes("Restablece tu contraseña de Crunchyroll"))) return respuesta;
+  const SUBJECT_MATCHES = [
+    "Restablece tu contraseña de Crunchyroll",
+    "Reset Your Crunchyroll Password"
+  ];
 
-  //FORMATO CODIGO DE INICIO DE SESION EN LA WEB CON MAX:
-  var btnElements = root.querySelectorAll('a[href^="https://links.mail.crunchyroll.com/ls/click?"]');
+  if (!SUBJECT_MATCHES.some(txt => subject.includes(txt))) return respuesta;
 
-  if (btnElements.length && btnElements.some(e=>e.textContent?.toLowerCase().includes('haz clic aquí'))) {
+  const BTN_TEXT_MATCHES = [
+    "haz clic aquí",
+    "click here"
+  ];
 
-    var resetBtn = btnElements.find(e=>e.textContent?.toLowerCase().includes('haz clic aquí'));
+  const btnElements = Array.from(
+    root.querySelectorAll('a[href^="https://links.mail.crunchyroll.com/ls/click?"]')
+  );
+
+  const resetBtn = btnElements.find(e =>
+    BTN_TEXT_MATCHES.some(txt =>
+      e.textContent?.toLowerCase().includes(txt)
+    )
+  );
+
+  if (resetBtn) {
     console.log("Es de enlace para cambiar contraseña Crunchyroll");
     context.sendJustIf = "{crunchy-reset-pass}";
     respuesta.noError = true;
     respuesta.link = parseAttributes(resetBtn).href;
-    respuesta.about = 'Enlace para cambiar contraseña Crunchyroll'
-
-    return respuesta
+    respuesta.about = "Enlace para cambiar contraseña Crunchyroll";
+    return respuesta;
   }
 
   console.log("no es de Reset password crunchyroll");
   return respuesta;
 }
+
 
 function extractCode(htmlText, subject, context={}) {
     
