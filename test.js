@@ -24,48 +24,7 @@ function verifyChatGpt(root, respuesta, subject, context) {
   return respuesta
 
 }
-/* function verifyChatGpt(root, respuesta, subject, context) {
-  const regexSixNumberMax = /^\d{6}$/g;
 
-  // 1. Validar remitente
-  if (!context?.from?.includes("noreply@tm.openai.com")) {
-    return respuesta;
-  }
-
-  if (!(subject?.includes("Your ChatGPT code is") || subject?.toLowerCase().includes("tu código chatgpt es"))) return respuesta;
-
-
-  // Buscar todos los <h1>
-  const h1s = root.querySelectorAll('h1');
-  var theCodeH1 = null;
-
-  for (var h1 of h1s) {
-
-    if (h1.innerText.match(regexSixNumberMax)) {
-      theCodeH1 = h1;
-      break
-    }
-  }
-
-  if (theCodeH1 === null) {
-    return respuesta
-  }else{
-    
-  }
-
-
-
-  const code = theCodeH1.innerText;
-
-
-  context.keyword = "chatgpt";
-  console.log("Es de código de acceso único para ChatGPT");
-  respuesta.noError = true;
-  respuesta.code = code;
-  respuesta.about = "Código de acceso único ChatGPT (Válido por 15 min)";
-  return respuesta
-
-} */
 
 function verifyDisneyEmailChange(root, respuesta, subject, context) {
 
@@ -398,6 +357,36 @@ function verifyCrunchyrollLogin(root, respuesta, subject, context) {
   return respuesta;
 }
 
+
+function verifyCrunchyPassReset(root, respuesta, subject, context) {
+
+  if (!(context?.from?.includes("hello@info.crunchyroll.com"))) {
+    return respuesta;
+  }
+
+  context.keyword = "crunchy-reset-pass";
+
+  if (!(subject.includes("Restablece tu contraseña de Crunchyroll"))) return respuesta;
+
+  //FORMATO CODIGO DE INICIO DE SESION EN LA WEB CON MAX:
+  var btnElements = root.querySelectorAll('a[href^="https://links.mail.crunchyroll.com/ls/click?"]');
+
+  if (btnElements.length && btnElements.some(e=>e.textContent?.toLowerCase().includes('haz clic aquí'))) {
+
+    var resetBtn = btnElements.find(e=>e.textContent?.toLowerCase().includes('haz clic aquí'));
+    console.log("Es de enlace para cambiar contraseña Crunchyroll");
+    context.sendJustIf = "crunchy-reset-pass";
+    respuesta.noError = true;
+    respuesta.link = parseAttributes(resetBtn).href;
+    respuesta.about = 'Enlace para cambiar contraseña Crunchyroll'
+
+    return respuesta
+  }
+
+  console.log("no es de Reset password crunchyroll");
+  return respuesta;
+}
+
 function extractCode(htmlText, subject, context={}) {
     
     var respuesta = {
@@ -500,6 +489,13 @@ function extractCode(htmlText, subject, context={}) {
         return respuesta;
     }else{
         console.log("No es de enlace de max reset password")
+    }
+
+   verifyCrunchyPassReset(root, respuesta, subject, context)
+   if (respuesta.noError === true) {
+        return respuesta;
+    }else{
+        console.log("No es de enlace de crunchyroll reset password")
     }
   
     return respuesta
