@@ -375,7 +375,7 @@ function verifyCrunchyPassReset(root, respuesta, subject, context) {
 
     var resetBtn = btnElements.find(e=>e.textContent?.toLowerCase().includes('haz clic aquí'));
     console.log("Es de enlace para cambiar contraseña Crunchyroll");
-    context.sendJustIf = "crunchy-reset-pass";
+    context.sendJustIf = "{crunchy-reset-pass}";
     respuesta.noError = true;
     respuesta.link = parseAttributes(resetBtn).href;
     respuesta.about = 'Enlace para cambiar contraseña Crunchyroll'
