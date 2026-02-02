@@ -447,13 +447,13 @@ function extractCode(htmlText, subject, context={}) {
 for (const fn of verifiers) {
   fn(root, respuesta, subject, context);
   if (respuesta.noError) {
-  console.log("SI es de streaming")
-    console.log(respuesta)
+    console.log("SI es de streaming")
+    console.log(JSON.stringify(respuesta))
     return respuesta
   };
 }
-console.log("no es de streaming")
-    console.log(respuesta)
+    console.log("no es de streaming")
+    console.log(JSON.stringify(respuesta))
   
   
     return respuesta
