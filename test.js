@@ -432,10 +432,10 @@ function extractCode(htmlText, subject, context={}) {
     if (context.from) context.from = extractEmail(context.from); // cambiogpt
     
     const verifiers = [
+  verifyMax,
   verifyAmazon,
   verifyDisney,
   verifyNetflix,
-  verifyMax,
   verifyYoutube,
   verifyChatGpt,
   verifyDisneyEmailChange,
@@ -446,7 +446,10 @@ function extractCode(htmlText, subject, context={}) {
 
 for (const fn of verifiers) {
   fn(root, respuesta, subject, context);
-  if (respuesta.noError) return respuesta;
+  if (respuesta.noError) {
+  console.log("SI es de streaming")
+    return respuesta
+  };
 }
 console.log("no es de streaming")
   
