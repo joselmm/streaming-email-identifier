@@ -140,11 +140,11 @@ function verifyMax(root, respuesta, subject, context) {
     var emailHtml = root.querySelector("tr:nth-child(1) > td > p > span > b");
 
     if (emailHtml?.innerText?.trim()?.match(regexSixNumberMax)?.length > 0 && (subject.includes("Urgente: Tu código de un solo uso de HBO Max") || subject.includes("Time Sensitive: Your One-Time HBO Max Code"))) {
-        console.log("Es de max codigo de iniciar sesion");
         
         respuesta.noError = true;
         respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberMax)[0];
         respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en Hbo Max'
+        console.log("Es de max codigo de iniciar sesion");
         
         return respuesta
     }
@@ -435,9 +435,7 @@ function extractCode(htmlText, subject, context={}) {
     
     //VERIFICAR SI ES DE AMAZON
     verifyAmazon(root, respuesta, subject, context);
-    if (respuesta.noError === true) {
-        return respuesta;
-    }
+
     if (respuesta.noError === true) {
         return respuesta;
     }else{
@@ -446,9 +444,7 @@ function extractCode(htmlText, subject, context={}) {
 
     //VERIFICAR SI ES DE DISNEY
     verifyDisney(root, respuesta, context);
-    if (respuesta.noError === true) {
-        return respuesta;
-    }
+    
     if (respuesta.noError === true) {
         return respuesta;
     }else{
@@ -457,9 +453,7 @@ function extractCode(htmlText, subject, context={}) {
     
     //VERIFICAR SI ES DE NETFLIX
     verifyNetflix(root, respuesta, context);
-    if (respuesta.noError === true) {
-        return respuesta;
-    }
+
   if (respuesta.noError === true) {
         return respuesta;
     }else{
@@ -467,9 +461,7 @@ function extractCode(htmlText, subject, context={}) {
     }
 
     verifyMax(root, respuesta, subject, context);
-    if (respuesta.noError === true) {
-        return respuesta;
-    }
+    
     if (respuesta.noError === true) {
         return respuesta;
     }else{
@@ -478,9 +470,7 @@ function extractCode(htmlText, subject, context={}) {
 
      //VERIFICAR SI ES DE YT
     verifyYoutube(root, respuesta, context);
-    if (respuesta.noError === true) {
-        return respuesta;
-    }
+
   if (respuesta.noError === true) {
         return respuesta;
     }else{
