@@ -19,8 +19,6 @@ function verifyChatGpt(root, respuesta, subject, context) {
   respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en ChatGPT'
   console.log("Es de ChatGPT codigo")
 
-  debugger
-
   return respuesta
 
 }
@@ -203,7 +201,7 @@ function verifyNetflix(root, respuesta, context) {
         respuesta.noError = true;
         respuesta.code = codeContainer.innerText.trim();
         respuesta.about = "Codigo para iniciar sesión Netflix"
-        return true
+        return respuesta
     };
 
 
@@ -230,7 +228,7 @@ function verifyNetflix(root, respuesta, context) {
         respuesta.noError = true;
         respuesta.link = link;
         respuesta.about = "Enlace Codigo Estoy de Viaje Netflix\n(Valido por 15 Min)";
-        return true;
+        return respuesta;
     }
 
 
@@ -258,7 +256,7 @@ function verifyNetflix(root, respuesta, context) {
         respuesta.noError = true;
         respuesta.link = link;
         respuesta.about = "Enlace Aprobacion Actualizar Hogar Netflix\n(Valido por 15 Min)";
-        return true;
+        return respuesta;
     }
 
     //ENLACE DE APROBACION EN TV SMART
@@ -276,7 +274,7 @@ function verifyNetflix(root, respuesta, context) {
 
     console.log("NO continuar con netflix")
 
-    return false;
+    return respuesta;
 
 
 }
