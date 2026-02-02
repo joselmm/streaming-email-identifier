@@ -431,86 +431,24 @@ function extractCode(htmlText, subject, context={}) {
     if (context.to) context.to = extractEmail(context.to); // cambiogpt
     if (context.from) context.from = extractEmail(context.from); // cambiogpt
     
-    //VERIFICAR SI ES DE AMAZON
-    verifyAmazon(root, respuesta, subject, context);
+    const verifiers = [
+  verifyAmazon,
+  verifyDisney,
+  verifyNetflix,
+  verifyMax,
+  verifyYoutube,
+  verifyChatGpt,
+  verifyDisneyEmailChange,
+  verifyCrunchyrollLogin,
+  verifyMaxPassReset,
+  verifyCrunchyPassReset
+];
 
-    if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de OTP signin prime")
-    }
+for (const fn of verifiers) {
+  fn(root, respuesta, subject, context);
+  if (respuesta.noError) return respuesta;
+}
 
-    //VERIFICAR SI ES DE DISNEY
-    verifyDisney(root, respuesta, context);
-    
-    if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de OTP Disney")
-    }
-    
-    //VERIFICAR SI ES DE NETFLIX
-    verifyNetflix(root, respuesta, context);
-
-  if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de OTP Netflix")
-    }
-
-    verifyMax(root, respuesta, subject, context);
-    
-    if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de OTP hbo max")
-    }
-
-     //VERIFICAR SI ES DE YT
-    verifyYoutube(root, respuesta, context);
-
-  if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de youtube")
-    }
-
-    //VERIFICAR SI ES DE CHATGPT
-    
-    verifyChatGpt(root, respuesta, subject, context);
-    if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de chatgpt")
-    }
-
-    verifyDisneyEmailChange(root, respuesta, subject, context)
-    if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de cambio de email disney")
-    }
-
-    verifyCrunchyrollLogin(root, respuesta, subject, context)
-    if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de aprobacion login Crunchyroll")
-    }
-
-    verifyMaxPassReset(root, respuesta, subject, context);
-   if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de enlace de max reset password")
-    }
-
-   verifyCrunchyPassReset(root, respuesta, subject, context)
-   if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de enlace de crunchyroll reset password")
-    }
   
     return respuesta
 }
