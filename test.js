@@ -448,7 +448,7 @@ for (const fn of verifiers) {
   fn(root, respuesta, subject, context);
   if (respuesta.noError) return respuesta;
 }
-
+console.log("no es de streaming")
   
     return respuesta
 }
