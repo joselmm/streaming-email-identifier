@@ -226,7 +226,7 @@ function verifyNetflix(root, respuesta, context) {
           }
           
         }
-        respuesta.netflixTravel=true;
+        context.netflixTravel=true;
         respuesta.noError = true;
         respuesta.link = link;
         respuesta.about = "Enlace Codigo Estoy de Viaje Netflix\n(Valido por 15 Min)";
@@ -254,7 +254,7 @@ function verifyNetflix(root, respuesta, context) {
           
             
         }
-        respuesta.netflixHouseHold=true;
+        context.netflixHouseHold=true;
         respuesta.noError = true;
         respuesta.link = link;
         respuesta.about = "Enlace Aprobacion Actualizar Hogar Netflix\n(Valido por 15 Min)";
