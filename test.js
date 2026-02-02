@@ -345,9 +345,18 @@ function verifyCrunchyrollLogin(root, respuesta, subject, context) {
   if (!thereAreLinks) return respuesta;
 
   var aWithValidUrls = anchors.filter(e => parseAttributes(e.rawAttrs)?.href?.startsWith('https://links.mail.crunchyroll.com/ls/click?upn='));
+const hasNotMe = aWithValidUrls.some(e =>
+  e.innerText?.toLowerCase().includes("esto no fui yo")
+);
 
-  var wasMeBtn = aWithValidUrls.find(e => e.innerText?.toLowerCase()?.includes("was me") || e.innerText?.toLowerCase()?.includes("fui yo"))
-  if (wasMeBtn) {
+const wasMeBtn = aWithValidUrls.find(e =>
+  ["was me", "fui yo"].some(txt =>
+    e.innerText?.toLowerCase().includes(txt)
+  )
+);
+
+  // continuar
+if (!hasNotMe && wasMeBtn) {
     //console.log(aWithValidUrls.map(e => parseAttributes(e.rawAttrs)?.href))
     context.keyword = "crunchyroll";
     respuesta.link = parseAttributes(wasMeBtn.rawAttrs).href;
