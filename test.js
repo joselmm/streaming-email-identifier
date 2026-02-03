@@ -333,35 +333,23 @@ function verifyCrunchyrollLogin(root, respuesta, subject, context) {
   if (context?.from?.includes("hello@info.crunchyroll.com") === false) {
     return respuesta;
   }
-
-  var anchors = Array.from(root.querySelectorAll("a"));
-
-  if (anchors.length === 0) return respuesta;
-
-  var thereAreLinks = anchors.some(e => parseAttributes(e.rawAttrs)?.href?.startsWith('https://links.mail.crunchyroll.com/ls/click?upn='));
-
-  if (!thereAreLinks) return respuesta;
-
-  var aWithValidUrls = anchors.filter(e => parseAttributes(e.rawAttrs)?.href?.startsWith('https://links.mail.crunchyroll.com/ls/click?upn='));
-const hasNotMe = aWithValidUrls.some(e =>
-  e.innerText?.toLowerCase().includes("esto no fui yo")
-);
-
-const wasMeBtn = aWithValidUrls.find(e =>
-  ["was me", "fui yo"].some(txt =>
-    e.innerText?.toLowerCase().includes(txt)
-  )
-);
-
-  // continuar
-if (!hasNotMe && wasMeBtn) {
-    //console.log(aWithValidUrls.map(e => parseAttributes(e.rawAttrs)?.href))
-    context.keyword = "crunchyroll";
-    respuesta.link = parseAttributes(wasMeBtn.rawAttrs).href;
-    respuesta.noError = true;
-    respuesta.about = "Enlace de aprobacion de inicio de sesion, Crunchyroll"
-    context.crunchyAprobarLink = true;
+  var [thisWaMeBtn, thisWasNotMeBtn]= root.querySelectorAll('[style="border-radius: 0px; display: inline-block; mso-padding-alt: 0; background-color: #E05200 !important; color: #000000; font-size: 16px; font-weight: 400; text-decoration: none; border-collapse: collapse; mso-line-height-rule: exactly; padding: 10px 14px;"]')
+    
+  if(!(thisWaMeBtn && thisWasNotMeBtn && thisWaMeBtn.tagName === "A" && thisWasNotMeBtn.tagName === "A")) return respuesta;
+  if(!(thisWaMeBtn.parentNode.parentNode === thisWasNotMeBtn.parentNode.parentNode)) return respuesta;
+  if(!(thisWasNotMeBtn.parentNode?.tagName==='TD' && thisWasNotMeBtn.parentNode?.parentNode?.tagName==='TR' && thisWasNotMeBtn.parentNode?.parentNode?.parentNode?.tagName==='TABLE')){
+  return respuesta;
   }
+
+    if(thisWaMeBtn.attributes?.href?.trim().startsWith('https://links.mail.crunchyroll.com/ls/click?upn=') && thisWasNotMeBtn.attributes?.href?.trim().startsWith('https://links.mail.crunchyroll.com/ls/click?upn=')){
+        context.keyword = "crunchyroll";
+        respuesta.link = thisWaMeBtn.attributes.href.trim();
+        respuesta.noError = true;
+        respuesta.about = "Enlace de aprobacion de inicio de sesion, Crunchyroll"
+        context.crunchyAprobarLink = true;
+    
+    }
+
 
   return respuesta;
 }
