@@ -347,7 +347,9 @@ function verifyCrunchyrollLogin(root, respuesta, subject, context) {
         respuesta.noError = true;
         respuesta.about = "Enlace de aprobacion de inicio de sesion, Crunchyroll"
         context.crunchyAprobarLink = true;
-    
+      console.log('SI es crunchy')
+        return respuesta
+
     }
 
 
