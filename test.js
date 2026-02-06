@@ -34,6 +34,7 @@ function verfiyNetflixAccountChanges(root, respuesta, subject, context) {
   if (!(codeEle.textContent && codeEle.textContent.trim() !== '')) return respuesta;
   var regexMatch = codeEle.textContent.match(sixDigitsRegex)
   if (regexMatch) {
+    context.keyword = 'netflix';
     respuesta.noError = true;
     respuesta.about = 'Codigo para cambios netflix (🚫 No Dar Al Cliente 🚫)';
     context.sendJustIf = '{netflix-account-changes}'
