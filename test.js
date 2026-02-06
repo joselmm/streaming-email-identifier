@@ -218,10 +218,9 @@ function verifyNetflix(root, respuesta, context) {
     if (!bodyHtml?.toLowerCase()?.includes("netflix")) return respuesta;
 
     var codeContainer = root.querySelector("table > tbody > tr > td > table > tbody > tr:nth-child(2) > td > table:nth-child(3) > tbody > tr > td");
-    if(!(codeContainer && codeContainer.textContent.trim())) return respuesta;
-    if(!(codeContainer.textContent.match(fourDigitsRegex))) return respuesta;
+   
   
-    if ((bodyHtml.includes("Ingresa este código para iniciar sesión") || bodyHtml.includes("Enter this code to sign in") || bodyHtml.includes("Escribe este código para iniciar sesión"))) {
+    if (codeContainer && (bodyHtml.includes("Ingresa este código para iniciar sesión") || bodyHtml.includes("Enter this code to sign in") || bodyHtml.includes("Escribe este código para iniciar sesión"))) {
         console.log("Es codigo 4 digitos de inicio de sesión Netflix ")
         
         respuesta.noError = true;
