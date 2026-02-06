@@ -206,6 +206,7 @@ function verifyMaxPassReset(root, respuesta, subject, context) {
 
 
 function verifyNetflix(root, respuesta, context) {
+    var fourDigitsRegex = /^\d{4}$/; // Obliga a que sean exactamente 4
     context.keyword = "netflix";
 
     if (context?.from?.includes("info@account.netflix.com") === false) {
@@ -214,11 +215,14 @@ function verifyNetflix(root, respuesta, context) {
 
     var bodyHtml = root.querySelector("body")?.toString();
     //COMPROBAR QUE EN EL CONTENIDO DEL CORREO ESTE LA PALABRA "netflix" (mayusculas o como sea)
-    if (!bodyHtml?.toLowerCase()?.includes("netflix")) return respuesta
+    if (!bodyHtml?.toLowerCase()?.includes("netflix")) return respuesta;
 
     var codeContainer = root.querySelector("table > tbody > tr > td > table > tbody > tr:nth-child(2) > td > table:nth-child(3) > tbody > tr > td");
-    if (codeContainer && (bodyHtml.includes("Ingresa este código para iniciar sesión") || bodyHtml.includes("Enter this code to sign in") || bodyHtml.includes("Escribe este código para iniciar sesión"))) {
-        console.log("Es codigo de inicio de sesión")
+    if(!(codeContainer && codeContainer.textContent.trim())) return respuesta;
+    if(!(codeContainer.textContent.match(fourDigitsRegex))) return respuesta;
+  
+    if ((bodyHtml.includes("Ingresa este código para iniciar sesión") || bodyHtml.includes("Enter this code to sign in") || bodyHtml.includes("Escribe este código para iniciar sesión"))) {
+        console.log("Es codigo 4 digitos de inicio de sesión Netflix ")
         
         respuesta.noError = true;
         respuesta.code = codeContainer.innerText.trim();
