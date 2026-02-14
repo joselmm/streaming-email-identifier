@@ -278,7 +278,7 @@ function verifyNetflix(root, respuesta, context) {
           
             
         }
-        context.netflixHouseHold=true;
+        
         respuesta.noError = true;
         respuesta.link = link;
         respuesta.about = "Enlace Aprobacion Actualizar Hogar Netflix\n(Valido por 15 Min)";
