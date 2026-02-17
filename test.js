@@ -246,6 +246,7 @@ function verifyNetflix(root, respuesta, context) {
     
           if (profileName) {
               console.log("Para perfil: "+profileName)
+              context.noCredencialsRequired = true;
               context.profileName = profileName
           }
           
@@ -271,8 +272,8 @@ function verifyNetflix(root, respuesta, context) {
           var profileName = profileInfoElement?.innerText.split("Solicitud de ")[1]?.split(",")[0]?.trim();
     
           if (profileName) {
+              context.noCredencialsRequired = true;
               console.log("Para perfil: "+profileName)
-              
               context.profileName = profileName
          }
           
