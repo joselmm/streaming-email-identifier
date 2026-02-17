@@ -254,6 +254,7 @@ function verifyNetflix(root, respuesta, context) {
         context.netflixTravel=true;
         respuesta.noError = true;
         respuesta.link = link;
+        respuesta.ifIsCodeAbout="Codigo Estoy de Viaje Netflix\n(Valido por 15 Min)"
         respuesta.about = "Enlace Codigo Estoy de Viaje Netflix\n(Valido por 15 Min)";
         return respuesta;
     }
