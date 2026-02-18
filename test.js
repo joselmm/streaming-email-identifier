@@ -599,7 +599,7 @@ function main(e) {
     var mensajeUsado = null;
 
     // Ordenar hilos por fecha (más reciente primero)
-    threads.sort((a, b) => b.getLastMessageDate() - a.getLastMessageDate());
+    //threads.sort((a, b) => b.getLastMessageDate() - a.getLastMessageDate());
 
     for (var t = 0; t < threads.length; t++) {
       var allMessages = threads[t].getMessages();
