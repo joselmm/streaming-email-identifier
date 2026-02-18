@@ -727,7 +727,7 @@ function main(e) {
     var userData = JSON.parse(e.postData.contents);
     var targetEmail = userData.emailToCheck.toLowerCase();
 
-    var verify = VerifyContactAndEmail(userData);
+    var verify = VerifyContactAndEmail(userData, e.masterKey);
     if (verify !== true) throw new Error(verify);
 
     // 1️⃣ Buscamos los 5 hilos más recientes que mencionen el correo
@@ -821,12 +821,9 @@ function main(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function VerifyContactAndEmail(userData) {
+function VerifyContactAndEmail(userData, masterKey) {
     try {
         theContact = userData.contact;
-
-        // 🛡️ OBTENER KEY DESDE LAS PROPIEDADES DEL SCRIPT
-        const masterKey = PropertiesService.getScriptProperties().getProperty('ADMIN_KEY');
 
         // 👑 VALIDACIÓN SUPERADMIN
         if (masterKey && userData.contact === masterKey) {
