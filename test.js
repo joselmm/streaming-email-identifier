@@ -395,102 +395,125 @@ function verifyMaxPassReset(root, respuesta, subject, context) {
 
 
 function verifyNetflix(root, respuesta, context) {
-    var fourDigitsRegex = /^\d{4}$/; // Obliga a que sean exactamente 4
-    context.keyword = "netflix";
 
-    if (context?.from?.includes("info@account.netflix.com") === false) {
-      return respuesta;
+  context.keyword = "netflix";
+
+  if (context?.from?.includes("info@account.netflix.com") === false) {
+    return respuesta;
+  }
+
+  var bodyHtml = root.querySelector("body")?.toString();
+  //COMPROBAR QUE EN EL CONTENIDO DEL CORREO ESTE LA PALABRA "netflix" (mayusculas o como sea)
+  if (!bodyHtml?.toLowerCase()?.includes("netflix")) return respuesta;
+
+  var codeContainer = root.querySelector("table > tbody > tr > td > table > tbody > tr:nth-child(2) > td > table:nth-child(3) > tbody > tr > td");
+
+
+  if (codeContainer && (bodyHtml.includes("Ingresa este código para iniciar sesión") || bodyHtml.includes("Enter this code to sign in") || bodyHtml.includes("Escribe este código para iniciar sesión"))) {
+    console.log("Es codigo 4 digitos de inicio de sesión Netflix ")
+
+    respuesta.noError = true;
+    respuesta.code = codeContainer.innerText.trim();
+    respuesta.about = "Codigo para iniciar sesión Netflix"
+    return respuesta
+  };
+
+
+  //COMPROBAR SI ES ESTOY DE VIAJE
+
+
+  var linkElementViaje = root.querySelector('a[href^="https://www.netflix.com/account/travel/verify?"]');
+  if (linkElementViaje) {
+    console.log("Es para estoy estoy de viaje netflix");
+
+    var link = linkElementViaje?.attributes?.href?.trim();
+    var profileInfoElement = root.querySelector('td.profile-info');
+    var firstOptionTravel = "Solicitud de ";
+    if (profileInfoElement?.innerText?.startsWith(firstOptionTravel)) {
+      var profileName = profileInfoElement?.innerText.split(firstOptionTravel)[1]?.split("desde:")[0]?.trim();
+
+      if (profileName) {
+        console.log("Para perfil: " + profileName)
+        context.noCredencialsRequired = true;
+        context.profileName = profileName
+      }
     }
+    var secondOptionTravel = " ha enviado una solicitud desde ";
 
-    var bodyHtml = root.querySelector("body")?.toString();
-    //COMPROBAR QUE EN EL CONTENIDO DEL CORREO ESTE LA PALABRA "netflix" (mayusculas o como sea)
-    if (!bodyHtml?.toLowerCase()?.includes("netflix")) return respuesta;
+    if (profileInfoElement?.innerText?.includes(secondOptionTravel)) {
+      var profileName = profileInfoElement?.innerText.split(secondOptionTravel)[0]?.trim();
 
-    var codeContainer = root.querySelector("table > tbody > tr > td > table > tbody > tr:nth-child(2) > td > table:nth-child(3) > tbody > tr > td");
-   
-  
-    if (codeContainer && (bodyHtml.includes("Ingresa este código para iniciar sesión") || bodyHtml.includes("Enter this code to sign in") || bodyHtml.includes("Escribe este código para iniciar sesión"))) {
-        console.log("Es codigo 4 digitos de inicio de sesión Netflix ")
-        
-        respuesta.noError = true;
-        respuesta.code = codeContainer.innerText.trim();
-        respuesta.about = "Codigo para iniciar sesión Netflix"
-        return respuesta
-    };
-
-
-    //COMPROBAR SI ES ESTOY DE VIAJE
-   
-
-    var linkElementViaje = root.querySelector('a[href^="https://www.netflix.com/account/travel/verify?"]');
-    if (linkElementViaje) {
-        console.log("Es para estoy estoy de viaje netflix");
-        
-        var link = linkElementViaje?.attributes?.href?.trim();
-        var profileInfoElement = root.querySelector('td.profile-info');
-
-        if (profileInfoElement?.innerText?.startsWith("Solicitud de ")) {
-          var profileName = profileInfoElement?.innerText.split("Solicitud de ")[1]?.split("desde:")[0]?.trim();
-    
-          if (profileName) {
-              console.log("Para perfil: "+profileName)
-              context.noCredencialsRequired = true;
-              context.profileName = profileName
-          }
-          
-        }
-        context.netflixTravel=true;
-        respuesta.noError = true;
-        respuesta.link = link;
-        respuesta.ifIsCodeAbout="Codigo Estoy de Viaje Netflix\n(Valido por 15 Min)"
-        respuesta.about = "Enlace Codigo Estoy de Viaje Netflix\n(Valido por 15 Min)";
-        return respuesta;
+      if (profileName) {
+        console.log("Para perfil: " + profileName)
+        context.noCredencialsRequired = true;
+        context.profileName = profileName
+      }
     }
+    context.netflixTravel = true;
+    respuesta.noError = true;
+    respuesta.link = link;
+    respuesta.ifIsCodeAbout = "Codigo Estoy de Viaje Netflix\n(Valido por 15 Min)"
+    respuesta.about = "Enlace Codigo Estoy de Viaje Netflix\n(Valido por 15 Min)";
+    return respuesta;
+  }
 
 
-    //COMPROBAR SI ES PARA ACTUALIZAR HOGAR
-    var linkElement = root.querySelector('a[href^="https://www.netflix.com/account/update-primary-location?"]');
-    if (linkElement) {
-        console.log("Es para actualizar hogar netflix");
-        
-        var link = linkElement?.attributes?.href?.trim();
+  //COMPROBAR SI ES PARA ACTUALIZAR HOGAR
+  var linkElement = root.querySelector('a[href^="https://www.netflix.com/account/update-primary-location?"]');
+  if (linkElement) {
+    console.log("Es para actualizar hogar netflix");
 
-        var profileInfoElement = root.querySelector('td.profile-info');
-        
-        if (profileInfoElement?.innerText?.startsWith("Solicitud de ")) {
-          var profileName = profileInfoElement?.innerText.split("Solicitud de ")[1]?.split(",")[0]?.trim();
-    
-          if (profileName) {
-              context.noCredencialsRequired = true;
-              console.log("Para perfil: "+profileName)
-              context.profileName = profileName
-         }
-          
-            
-        }
-        
-        respuesta.noError = true;
-        respuesta.link = link;
-        respuesta.about = "Enlace Aprobacion Actualizar Hogar Netflix\n(Valido por 15 Min)";
-        return respuesta;
-    }
+    var link = linkElement?.attributes?.href?.trim();
 
-    //ENLACE DE APROBACION EN TV SMART
+    var profileInfoElement = root.querySelector('td.profile-info');
+    var firstOption = "Solicitud de ";
+    if (profileInfoElement?.innerText?.startsWith(firstOption)) {
+      var profileName = profileInfoElement?.innerText.split(firstOption)[1]?.split(",")[0]?.trim();
 
-    var theLinkElement = root.querySelector('a[href^="https://www.netflix.com/ilum?code="]');
-    var link = theLinkElement?.attributes?.href?.trim();
-
-      if(bodyHtml.includes('Aprueba la nueva solicitud de inicio de sesión') && bodyHtml.includes("Te escribimos para informarte que tú o alguien que usa tu cuenta solicitaron un enlace de inicio de sesión") && theLinkElement && link){
-        console.log("Es para enlace de aprobacion en Netflix TV");
-        respuesta.noError=true;
-        respuesta.link = link;
-        respuesta.about = "Enlace de Aprobacion en TV - Netflix\n(Valido por 15 min)";
-        context.netflixLinkTv=true;
+      if (profileName) {
+        context.noCredencialsRequired = true;
+        console.log("Para perfil: " + profileName)
+        context.profileName = profileName
       }
 
-    console.log("NO continuar con netflix")
 
+    }
+    var secondOption = " ha enviado una solicitud desde el dispositivo"
+    if (profileInfoElement?.innerText?.includes(secondOption)) {
+      var profileName = profileInfoElement?.innerText.split(secondOption)[0]?.trim();
+
+      if (profileName) {
+        context.noCredencialsRequired = true;
+        console.log("Para perfil: " + profileName)
+        context.profileName = profileName
+      }
+
+
+    }
+
+    respuesta.noError = true;
+    respuesta.link = link;
+    respuesta.about = "Enlace Aprobacion Actualizar Hogar Netflix\n(Valido por 15 Min)";
     return respuesta;
+  }
+
+  //ENLACE DE APROBACION EN TV SMART
+
+  var theLinkElement = root.querySelector('a[href^="https://www.netflix.com/ilum?code="]');
+ 
+  var link = theLinkElement?.attributes?.href?.trim();
+
+  if (bodyHtml.includes('Aprueba la nueva solicitud de inicio de sesión') && bodyHtml.includes("Tú o alguien que use tu cuenta ha solicitado un enlace de inicio de sesión.") && theLinkElement && link) {
+    console.log("Es para enlace de aprobacion en Netflix TV");
+    respuesta.noError = true;
+    respuesta.link = link;
+    respuesta.about = "Enlace de Aprobacion en TV - Netflix\n(Valido por 15 min)";
+    context.netflixLinkTv = true;
+  }
+
+  console.log("NO continuar con netflix")
+
+  return respuesta;
 
 
 }
