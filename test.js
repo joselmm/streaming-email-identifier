@@ -145,6 +145,194 @@ function verifyYoutube(root, respuesta, context) {
     console.log("no es de YOutube");
     return respuesta;
 }
+function getEnvironment() {
+  if (typeof UrlFetchApp !== 'undefined') return 'GAS';
+  if (typeof process !== 'undefined' && process.versions && process.versions.node) return 'NODE';
+  if (typeof window !== 'undefined') return 'BROWSER';
+  return 'UNKNOWN';
+}
+
+// Este es el contenido de tu archivo remoto
+(function(global) {
+  // Verificamos si existe UrlFetchApp (Sello de identidad de GAS)
+  if (getEnvironment()==="GAS") {
+    
+    // Solo si estamos en GAS, definimos la función en el scope global
+    global.shortUrl = function (url) {
+  try {
+    const endpoint = "https://is.gd/create.php";
+    
+    const headers = {
+      "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+      "accept-language": "en-US,en;q=0.9,es-CO;q=0.8,es-ES;q=0.7,es;q=0.6",
+      "cache-control": "max-age=0",
+      "priority": "u=0, i",
+      "sec-ch-ua": "\"Chromium\";v=\"140\", \"Not=A?Brand\";v=\"24\", \"Google Chrome\";v=\"140\"",
+      "sec-ch-ua-arch": "\"x86\"",
+      "sec-ch-ua-bitness": "\"64\"",
+      "sec-ch-ua-full-version": "\"140.0.7339.185\"",
+      "sec-ch-ua-full-version-list": "\"Chromium\";v=\"140.0.7339.185\", \"Not=A?Brand\";v=\"24.0.0.0\", \"Google Chrome\";v=\"140.0.7339.185\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-model": "\"\"",
+      "sec-ch-ua-platform": "\"Windows\"",
+      "sec-ch-ua-platform-version": "\"10.0.0\"",
+      "sec-fetch-dest": "document",
+      "sec-fetch-mode": "navigate",
+      "sec-fetch-site": "same-origin",
+      "sec-fetch-user": "?1",
+      "upgrade-insecure-requests": "1",
+      "Referer": "https://is.gd/",
+      // Agrego User-Agent para completar la simulación de navegador
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+    };
+
+    const options = {
+      "method": "post",
+      "headers": headers,
+      "contentType": "application/x-www-form-urlencoded",
+      "payload": "url=" + encodeURIComponent(url) + "&shorturl=&opt=0",
+      "muteHttpExceptions": true // Fundamental para manejar errores manualmente
+    };
+
+    const response = UrlFetchApp.fetch(endpoint, options);
+    const responseCode = response.getResponseCode();
+    const text = response.getContentText();
+
+    // --- Manejo de Errores HTTP ---
+    if (responseCode !== 200) {
+      console.error("Error HTTP: " + responseCode);
+      console.error("Cuerpo del error: " + text);
+      
+      if (responseCode === 502 || responseCode === 503) {
+        console.warn("El servicio is.gd parece estar sobrecargado o caído.");
+      } else if (responseCode === 403) {
+        console.warn("Acceso denegado. Posible bloqueo por exceso de peticiones.");
+      }
+      return null;
+    }
+
+    // --- Procesamiento de Respuesta Exitosa (200 OK) ---
+    const match = text.match(/"https:\/\/is.gd\/[^"]+"/g);
+    const result = match !== null ? match[0].slice(1, -1) : null;
+
+    if (!result) {
+      console.warn("No se encontró la URL acortada en el HTML. Posible cambio en la interfaz de is.gd.");
+    }
+
+    console.log("Resultado de acortador: " + result);
+    return result;
+
+  } catch (error) {
+    // Errores de red o de ejecución (timeout, URL mal formada, etc.)
+    console.error("Excepción detectada: " + error.toString());
+    return null;
+  }
+}
+
+
+
+    global.getNetflixTravelCode = function(url) {
+      var result = { noError: true };
+      try {
+        // En GAS, las opciones suelen incluir headers para evitar bloqueos
+        var options = {
+          "method": "get",
+          "muteHttpExceptions": true,
+          "headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+          }
+        };
+
+        var httpRes = UrlFetchApp.fetch(url, options);
+        var responseCode = httpRes.getResponseCode();
+
+        if (responseCode < 200 || responseCode >= 300) {
+          throw new Error("HTTP " + responseCode);
+        }
+
+        var htmlRawText = httpRes.getContentText();
+        
+        // Usamos el parser que ya tienes configurado en tu GAS
+        var document = NodeHtmlParser.parse(htmlRawText);
+        
+        // querySelector funciona igual si el parser es compatible con esa sintaxis
+        var codeElement = document.querySelector('[data-uia="travel-verification-otp"]');
+
+        if (codeElement && codeElement.text) {
+          // Nota: Dependiendo de la versión de NodeHtmlParser, 
+          // a veces se usa .text o .textContent o .innerText
+          result.code = codeElement.text.trim();
+        } else {
+          result.noError = false;
+          result.errorMessage = "No se encontró el código en el HTML";
+        }
+
+      } catch (error) {
+        result.noError = false;
+        result.errorMessage = error.toString();
+      } finally {
+        return result;
+      }
+    };
+
+    global.processIfLink = function(result, context) {
+      // En GAS no usamos async, así que 'isCode' se evalúa linealmente
+      var isCode = result.code !== undefined;
+
+      // 1. Lógica para Netflix Travel
+      if (!isCode && context.netflixTravel) {
+        try {
+          console.log("✈️✈️✈️ Tratando de extraer codigo de viaje netflix");
+          
+          // Llamada síncrona a la función que ya inyectamos antes
+          var travelResult = global.getNetflixTravelCode(result.link);
+          
+          if (travelResult.noError) {
+            delete result.link;
+            result.code = travelResult.code;
+            
+            if (result.ifIsCodeAbout) {
+              result.about = result.ifIsCodeAbout;
+              delete result.ifIsCodeAbout;
+            }
+            isCode = true;
+          } else {
+            throw new Error(travelResult.errorMessage);
+          }
+        } catch (error) {
+          console.warn('✈️✈️✈️ No se pudo extraer codigo viaje netflix: ' + error.toString());
+        }
+      }
+
+      // 2. Lógica de Acortador (si no se obtuvo un código)
+      if (!isCode && result.link) {
+        // Llamada síncrona a la función shortUrl inyectada
+        var shortenUrl = global.shortUrl(result.link);
+        
+        if (shortenUrl !== null) {
+          result.link = shortenUrl;
+
+          // Modificación para Netflix Link TV
+          if (context.netflixLinkTv) {
+            var slug = shortenUrl.split("/").pop();
+            result.link = "https://ntv.cuenticas.pro/#" + slug;
+            console.log("Netflix Link TV: " + result.link);
+          }
+
+          // Modificación para Crunchyroll Aprobar
+          if (context.crunchyAprobarLink) {
+            var slug = shortenUrl.split("/").pop();
+            result.link = "https://ac.cuenticas.com/#" + slug;
+            console.log("Crunchy Link: " + result.link);
+          }
+        }
+      }
+    };
+  } else {
+    // Si estamos en Node, este código no hace nada
+    console.log("Node: Se evitó la inyección automática para no sobrescribir.");
+  }
+})(this);
 
 function verifyMax(root, respuesta, subject, context) {
 
@@ -429,15 +617,14 @@ function verifyCrunchyPassReset(root, respuesta, subject, context) {
 
 
 function extractCode(htmlText, subject, context={}) {
-    
     var respuesta = {
         noError: false,
         message: "No se encontro ningun codigo"
     }
+  
     const root = NodeHtmlParser.parse(htmlText);
 
-
-     // cambiogpt: normalizar siempre los emails de from y to
+    // Normalizar emails
     const emailRegex = /<([^>]+)>|([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/;
     function extractEmail(str) {
         if (!str) return "";
@@ -445,99 +632,55 @@ function extractCode(htmlText, subject, context={}) {
         return match ? (match[1] || match[2]) : "";
     }
 
-    if (context.to) context.to = extractEmail(context.to); // cambiogpt
-    if (context.from) context.from = extractEmail(context.from); // cambiogpt
+    if (context.to) context.to = extractEmail(context.to);
+    if (context.from) context.from = extractEmail(context.from);
 
-  //VERIFICAR SI ES DE DISNEY
+    // --- Función interna para centralizar la salida ---
+    // Esto asegura que si es GAS, procesamos el link antes de devolverlo
+    const finalizar = (res) => {
+        console.log("es de "+res.keyword)
+        if (getEnvironment() === "GAS" && res.noError) {
+            // Aquí se ejecutan las llamadas a is.gd o Netflix Travel
+            processIfLink(res, context);
+        }
+        return res;
+    };
+
+    // VERIFICACIONES
     verifyDisney(root, respuesta, context);
-    
-    if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de OTP Disney")
-    }
-    
-    //VERIFICAR SI ES DE AMAZON
+    if (respuesta.noError) return finalizar(respuesta);
+
     verifyAmazon(root, respuesta, subject, context);
+    if (respuesta.noError) return finalizar(respuesta);
 
-    if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de OTP signin prime")
-    }
-
-    
-    
-    //VERIFICAR SI ES DE NETFLIX
     verifyNetflix(root, respuesta, context);
-
-  if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de OTP Netflix")
-    }
+    if (respuesta.noError) return finalizar(respuesta);
 
     verifyMax(root, respuesta, subject, context);
-    
-    if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de OTP hbo max")
-    }
+    if (respuesta.noError) return finalizar(respuesta);
 
-     //VERIFICAR SI ES DE YT
     verifyYoutube(root, respuesta, context);
+    if (respuesta.noError) return finalizar(respuesta);
 
-  if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de youtube")
-    }
-
-    //VERIFICAR SI ES DE CHATGPT
-    
     verifyChatGpt(root, respuesta, subject, context);
-    if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de chatgpt")
-    }
+    if (respuesta.noError) return finalizar(respuesta);
 
-    verifyDisneyEmailChange(root, respuesta, subject, context)
-    if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de cambio de email disney")
-    }
+    verifyDisneyEmailChange(root, respuesta, subject, context);
+    if (respuesta.noError) return finalizar(respuesta);
 
-    verifyCrunchyrollLogin(root, respuesta, subject, context)
-    if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de aprobacion login Crunchyroll")
-    }
+    verifyCrunchyrollLogin(root, respuesta, subject, context);
+    if (respuesta.noError) return finalizar(respuesta);
 
     verifyMaxPassReset(root, respuesta, subject, context);
-   if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de enlace de max reset password")
-    }
+    if (respuesta.noError) return finalizar(respuesta);
 
-   verifyCrunchyPassReset(root, respuesta, subject, context)
-   if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es de enlace de crunchyroll reset password")
-    }
+    verifyCrunchyPassReset(root, respuesta, subject, context);
+    if (respuesta.noError) return finalizar(respuesta);
 
-  verfiyNetflixAccountChanges(root, respuesta, subject, context)
-  if (respuesta.noError === true) {
-        return respuesta;
-    }else{
-        console.log("No es codigo para cambios netflix")
-    }
-    return respuesta
+    verfiyNetflixAccountChanges(root, respuesta, subject, context);
+    if (respuesta.noError) return finalizar(respuesta);
+  
+    return respuesta; // Si llega aquí, noError es false
 }
 
 
