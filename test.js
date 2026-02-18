@@ -796,9 +796,9 @@ function main(e) {
 
     // 4️⃣ Validación de tiempo (20 min)
     var dateObj = mensajeUsado.getDate();
-    if (Date.now() - dateObj.getTime() > 1000 * 60 * 20) {
+    /* if (Date.now() - dateObj.getTime() > 1000 * 60 * 20) {
       throw new Error("El código encontrado para " + targetEmail + " ya expiró (más de 20 min)");
-    }
+    } */
 
     response.estimatedTimeAgo =
       dateObj.toLocaleTimeString('es-CO', { hour12: true }) +
