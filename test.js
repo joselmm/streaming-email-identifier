@@ -23,6 +23,36 @@ function verifyChatGpt(root, respuesta, subject, context) {
 
 }
 
+
+function verifyAppleTv(root, respuesta, subject, context) {
+
+  var sixDigitsRegex = /^\d{6}$/;
+
+  if (context?.from?.includes("@apple.com") === false) {
+    return respuesta;
+  }
+
+  var codeEle = root.querySelector("#main > div.container > div > p:nth-child(1) > b");
+
+  if (!codeEle) return respuesta;
+  
+  if (!(codeEle.textContent && codeEle.textContent.trim() !== '')) return respuesta;
+  
+  var regexMatch = codeEle.textContent.trim().match(sixDigitsRegex)
+  
+  if (regexMatch) {
+    console.log("Es codigo de apple tv")
+    context.keyword = "apple"
+    respuesta.noError = true;
+    respuesta.about = 'Codigo para iniciar sesion en Apple TV';
+    respuesta.code = codeEle.textContent.trim();
+    return respuesta;
+  }
+  
+  console.log("No es de apple tv")
+  return respuesta;
+}
+
 function verfiyNetflixAccountChanges(root, respuesta, subject, context) {
 
   var sixDigitsRegex = /^\d{6}$/;
@@ -701,6 +731,9 @@ function extractCode(htmlText, subject, context={}) {
     if (respuesta.noError) return finalizar(respuesta);
 
     verfiyNetflixAccountChanges(root, respuesta, subject, context);
+    if (respuesta.noError) return finalizar(respuesta);
+
+    verifyAppleTv(root, respuesta, subject, context)
     if (respuesta.noError) return finalizar(respuesta);
   
     return respuesta; // Si llega aquí, noError es false
