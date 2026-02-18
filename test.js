@@ -823,15 +823,22 @@ function main(e) {
 
 function VerifyContactAndEmail(userData) {
     try {
-    theContact = userData.contact;
-        /*   
-          userData = {
-            "emailToCheck":"unadeprimeahi@outlook.com",
-            "contact":"3045969261"
-        }; */
+        theContact = userData.contact;
+
+        // 🛡️ OBTENER KEY DESDE LAS PROPIEDADES DEL SCRIPT
+        const masterKey = PropertiesService.getScriptProperties().getProperty('ADMIN_KEY');
+
+        // 👑 VALIDACIÓN SUPERADMIN
+        if (masterKey && userData.contact === masterKey) {
+            theContact = "👑 MODO SUPERADMIN";
+            console.log("Acceso autorizado vía Propiedades del Script (Master Key)");
+            return true;
+        }
+
+        // --- INICIO DE LÓGICA NORMAL (Sheets) ---
         var fetchedData = UrlFetchApp.fetch(LINK_LIBRERIA).getContentText();
-        //console.log(fetchedData)
         var [clients, platforms] = JSON.parse(fetchedData).sheetsData;
+
         var contactIndex = clients.data.map(e => e.contact).indexOf(userData.contact);
         if (contactIndex >= 0 && clients.data[contactIndex].active === "1") {
 
