@@ -927,12 +927,14 @@ function VerifyContactAndEmail(userData, masterKey) {
 
             // Buscamos el primer índice que coincida (comportamiento original)
             // Intentamos buscar por emailContact primero
-            var contactIndex = clients.data.map(e => e.emailContact).indexOf(userData.contact);
-
-            // Si no se encontró (-1), intentamos por el campo contact normal
+            // Buscamos de forma segura en emailContact
+            var contactIndex = clients.data.map(e => (e.emailContact || "").toLowerCase()).indexOf(userData.contact.toLowerCase());
+            
+            // Si no lo encuentra, buscamos en el contact normal
             if (contactIndex === -1) {
-                contactIndex = clients.data.map(e => e.contact).indexOf(userData.contact);
+                contactIndex = clients.data.map(e => (e.contact || "").toLowerCase()).indexOf(userData.contact.toLowerCase());
             }
+
             
             if (contactIndex >= 0 && clients.data[contactIndex].active === "1") {
                 theContact = clients.data[contactIndex].name + " (" + theContact + ")";
