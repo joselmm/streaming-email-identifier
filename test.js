@@ -776,19 +776,27 @@ function timeAgo(date) {
     return 'hace unos segundos';
 }
 
+/**
+ * Función principal para procesar la solicitud POST.
+ * Analiza únicamente el ÚLTIMO mensaje dirigido al usuario por cada hilo.
+ */
 function main(e) {
   var response = { noError: true };
+  var theContact = null;
 
   try {
+    // 1. Parseo de datos de entrada
     var userData = JSON.parse(e.postData.contents);
     var targetEmail = userData.emailToCheck.toLowerCase();
+    theContact = userData.contact || null;
 
+    // 2. Verificación de seguridad
     var verify = VerifyContactAndEmail(userData, e.masterKey);
     if (verify !== true) throw new Error(verify);
 
-    // 1️⃣ Buscamos los 5 hilos más recientes que mencionen el correo
-    var searchQuery = '"' + targetEmail + '" OR to:' + targetEmail;
-    var threads = GmailApp.search(searchQuery, 0, 5);
+    // 3. Búsqueda en Gmail
+    var searchQuery = 'to:' + targetEmail;
+    var threads = GmailApp.search(searchQuery, 0, 10); 
 
     if (threads.length === 0) {
       throw new Error("No se encontraron hilos para " + targetEmail);
@@ -797,65 +805,54 @@ function main(e) {
     var codeResponse = null;
     var mensajeUsado = null;
 
-    // Ordenar hilos por fecha (más reciente primero)
-    //threads.sort((a, b) => b.getLastMessageDate() - a.getLastMessageDate());
-
+    // 4. Bucle de Hilos (Threads)
     for (var t = 0; t < threads.length; t++) {
       var allMessages = threads[t].getMessages();
       
-      // 2️⃣ LIMITADOR: Solo extraemos los últimos 5 mensajes del hilo para no abusar de la API
-      var lastFive = allMessages.slice(-5).reverse(); 
+      // 1. .slice(-30) toma los últimos 30 mensajes (los más nuevos cronológicamente)
+      // 2. .reverse() los voltea para que el índice [0] sea el último que llegó
+      var messagesReverse = allMessages.slice(-30).reverse();
 
-      var validMessagesProcessed = 0;
-
-      for (var m = 0; m < lastFive.length; m++) {
-        // 3️⃣ SEGUNDO LIMITADOR: Solo procesamos los 3 más recientes que sean válidos
-        if (validMessagesProcessed >= 3) break;
-
-        var msg = lastFive[m];
-        var bodyPlain = msg.getPlainBody().toLowerCase();
-        var bodyHtml = msg.getBody().toLowerCase();
+      // 5. Bucle de Mensajes dentro del hilo
+      for (var m = 0; m < messagesReverse.length; m++) {
+        var msg = messagesReverse[m];
         var toField = msg.getTo().toLowerCase();
 
-        // CONDICIÓN: ¿El mensaje es realmente para esta cuenta?
-        if (bodyPlain.includes(targetEmail) || bodyHtml.includes(targetEmail) || toField.includes(targetEmail)) {
-          
-          validMessagesProcessed++; 
+        // CONDICIÓN: ¿El mensaje es para esta cuenta?
+        if (toField.includes(targetEmail)) {
           
           var htmlContent = msg.getBody();
           var subject = msg.getSubject();
+          var context = { to: targetEmail, from: msg.getFrom(), subject: subject };
 
-          var context = {
-            to: targetEmail,
-            from: msg.getFrom(),
-            profileName: null,
-            keyword: ""
-          };
-
-          console.log("Analizando mensaje válido " + validMessagesProcessed + " del hilo " + (t + 1));
+          // Intentamos extraer el código
           var result = extractCode(htmlContent, subject, context);
-
-          if (result && result.noError === true) {
+          
+          if (result && result.noError) {
             codeResponse = result;
             mensajeUsado = msg;
-            break; 
+          } else {
+            console.log("El último mensaje del hilo " + (t + 1) + " no era válido. Saltando al siguiente hilo...");
           }
+
+          // AQUI ESTÁ EL CAMBIO:
+          // Una vez encontrado el mensaje dirigido al correo (sea válido el código o no),
+          // rompemos el bucle de mensajes para no mirar más atrás en este hilo.
+          break; 
         }
       }
 
-      if (codeResponse) break; 
+      // Si ya encontramos un código exitoso en el último mensaje de algún hilo, dejamos de buscar en otros hilos
+      if (codeResponse) break;
     }
 
+    // 6. Validación final de resultados
     if (!codeResponse) {
-      throw new Error("No se encontró código válido para " + targetEmail + " en los últimos mensajes revisados.");
+      throw new Error("No se encontró código válido en el mensaje más reciente de los " + threads.length + " hilos analizados.");
     }
 
-    // 4️⃣ Validación de tiempo (20 min)
+    // 7. Preparación de la respuesta
     var dateObj = mensajeUsado.getDate();
-    /* if (Date.now() - dateObj.getTime() > 1000 * 60 * 20) {
-      throw new Error("El código encontrado para " + targetEmail + " ya expiró (más de 20 min)");
-    } */
-
     response.estimatedTimeAgo =
       dateObj.toLocaleTimeString('es-CO', { hour12: true }) +
       " - " +
@@ -863,10 +860,11 @@ function main(e) {
       "\n" +
       timeAgo(dateObj);
 
-    response = { ...response, ...codeResponse, contact: theContact };
+    response = Object.assign(response, codeResponse);
+    response.contact = theContact;
 
   } catch (err) {
-    console.log("Error en script: " + err.message);
+    console.log("Error en main: " + err.message);
     response.noError = false;
     response.message = err.message;
     response.contact = theContact;
