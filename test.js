@@ -922,10 +922,17 @@ function VerifyContactAndEmail(userData, masterKey) {
         // LÓGICA ANTERIOR: Si NO viene la variable 'wa'
         // ---------------------------------------------------------
         else {
+
             console.log("Ejecutando lógica estándar (sin wa)");
-            
+
             // Buscamos el primer índice que coincida (comportamiento original)
-            var contactIndex = clients.data.map(e => e.contact).indexOf(userData.contact);
+            // Intentamos buscar por emailContact primero
+            var contactIndex = clients.data.map(e => e.emailContact).indexOf(userData.contact);
+
+            // Si no se encontró (-1), intentamos por el campo contact normal
+            if (contactIndex === -1) {
+                contactIndex = clients.data.map(e => e.contact).indexOf(userData.contact);
+            }
             
             if (contactIndex >= 0 && clients.data[contactIndex].active === "1") {
                 theContact = clients.data[contactIndex].name + " (" + theContact + ")";
