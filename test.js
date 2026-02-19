@@ -882,49 +882,70 @@ function VerifyContactAndEmail(userData, masterKey) {
         // 👑 VALIDACIÓN SUPERADMIN
         if (masterKey && userData.contact === masterKey) {
             theContact = "👑 MODO SUPERADMIN";
-            console.log("Acceso autorizado vía Propiedades del Script (Master Key)");
+            console.log("Acceso autorizado vía Master Key");
             return true;
         }
 
-        // --- INICIO DE LÓGICA MULTI-CONTACTO (Sheets) ---
+        // --- CARGA DE DATOS DESDE SHEETS ---
         var fetchedData = UrlFetchApp.fetch(LINK_LIBRERIA).getContentText();
         var [clients, platforms] = JSON.parse(fetchedData).sheetsData;
-
-        // 1. Buscamos TODOS los clientes activos que tengan ese mismo número de contacto
-        var activeClients = clients.data.filter(c => c.contact === userData.contact && c.active === "1");
-
-        if (activeClients.length === 0) {
-            throw new Error("El usuario con el contacto '" + userData.contact + "' no existe o no está activo.");
-        }
-
-        // 2. Extraemos los IDs de esos clientes para buscar sus plataformas
-        var clientIds = activeClients.map(c => c.id);
-
-        // 3. Filtramos las plataformas que pertenecen a esos IDs y coinciden con el correo
         var targetEmail = userData.emailToCheck.toLowerCase();
-        var userPlatforms = platforms.data.filter(p => clientIds.includes(p.clientId) && p.email.toLowerCase() === targetEmail);
 
-        if (userPlatforms.length === 0) {
-            throw new Error("No se encontró el correo " + userData.emailToCheck + " asociado a su contacto.");
-        }
-
-        // 4. Verificamos las condiciones de la plataforma encontrada (tomamos la primera coincidencia válida)
-        // Buscamos una que esté activa y tenga credenciales permitidas
-        var validPlatform = userPlatforms.find(p => p.active === "1" && p.withCredentials === "1");
-
-        if (validPlatform) {
-            // Actualizamos theContact con el nombre del cliente dueño de esa plataforma específica
-            var owner = activeClients.find(c => c.id === validPlatform.clientId);
-            theContact = userData.contact;
+        // ---------------------------------------------------------
+        // LÓGICA NUEVA: Solo si viene la variable 'wa'
+        // ---------------------------------------------------------
+        if (userData.wa) {
+            console.log("Ejecutando lógica multi-contacto (wa detectado)");
             
-            console.log("Autorizado: " + theContact);
-            return true;
-        } else {
-            // Si encontró plataformas pero ninguna cumple los requisitos
-            var inactive = userPlatforms.find(p => p.active !== "1");
-            if (inactive) throw new Error("La cuenta " + userData.emailToCheck + " no está activa actualmente.");
+            // 1. Filtrar todos los clientes con ese número activos
+            var activeClients = clients.data.filter(c => c.contact === userData.contact && c.active === "1");
+            if (activeClients.length === 0) throw new Error("Contacto no encontrado o inactivo.");
+
+            // 2. Buscar plataformas de esos clientes que coincidan con el email
+            var clientIds = activeClients.map(c => c.id);
+            var userPlatforms = platforms.data.filter(p => clientIds.includes(p.clientId) && p.email.toLowerCase() === targetEmail);
+
+            if (userPlatforms.length === 0) throw new Error("Correo " + userData.emailToCheck + " no asociado a este contacto.");
+
+            // 3. Validar permisos de la plataforma encontrada
+            var validPlatform = userPlatforms.find(p => p.active === "1" && p.withCredentials === "1");
+            if (validPlatform) {
+                var owner = activeClients.find(c => c.id === validPlatform.clientId);
+                theContact = owner.name + " (" + userData.contact + ")";
+                return true;
+            } else {
+                throw new Error("La cuenta no está activa o no tiene permisos de acceso.");
+            }
+        } 
+        
+        // ---------------------------------------------------------
+        // LÓGICA ANTERIOR: Si NO viene la variable 'wa'
+        // ---------------------------------------------------------
+        else {
+            console.log("Ejecutando lógica estándar (sin wa)");
             
-            throw new Error("No tienes permiso para ver credenciales de " + userData.emailToCheck);
+            // Buscamos el primer índice que coincida (comportamiento original)
+            var contactIndex = clients.data.map(e => e.contact).indexOf(userData.contact);
+            
+            if (contactIndex >= 0 && clients.data[contactIndex].active === "1") {
+                theContact = clients.data[contactIndex].name + " (" + theContact + ")";
+                
+                var userPlatforms = platforms.data.filter(e => e.clientId === clients.data[contactIndex].id);
+                var platformIndex = userPlatforms.map(p => p.email.toLowerCase()).indexOf(targetEmail);
+
+                if (platformIndex >= 0) {
+                    var plat = userPlatforms[platformIndex];
+                    if (plat.active === "1" && plat.withCredentials === "1") {
+                        return true;
+                    } else {
+                        throw new Error("El usuario no tiene acceso o la cuenta no está activa.");
+                    }
+                } else {
+                    throw new Error("El usuario no tiene cuentas con este correo.");
+                }
+            } else {
+                throw new Error("El usuario no está activo o no existe.");
+            }
         }
 
     } catch (err) {
