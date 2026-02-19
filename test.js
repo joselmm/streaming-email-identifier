@@ -886,52 +886,49 @@ function VerifyContactAndEmail(userData, masterKey) {
             return true;
         }
 
-        // --- INICIO DE LÓGICA NORMAL (Sheets) ---
+        // --- INICIO DE LÓGICA MULTI-CONTACTO (Sheets) ---
         var fetchedData = UrlFetchApp.fetch(LINK_LIBRERIA).getContentText();
         var [clients, platforms] = JSON.parse(fetchedData).sheetsData;
 
-        var contactIndex = clients.data.map(e => e.contact).indexOf(userData.contact);
-        if (contactIndex >= 0 && clients.data[contactIndex].active === "1") {
+        // 1. Buscamos TODOS los clientes activos que tengan ese mismo número de contacto
+        var activeClients = clients.data.filter(c => c.contact === userData.contact && c.active === "1");
 
-            theContact = clients.data[contactIndex].name + " ("+ theContact+")";
-            //console.log(clients.data[contactIndex])
-            console.log("si esta activo");
-            var userPlatforms = platforms.data.filter(e => e.clientId === clients.data[contactIndex].id);
-            if (userPlatforms.length >= 1) {
-                var platformsWithTheEmail_Index = userPlatforms.map(p => p.email.toLowerCase()).indexOf(userData.emailToCheck.toLowerCase());
-                if (platformsWithTheEmail_Index >= 0) {
-                    console.log("dsdddd")
-                    if (userPlatforms[platformsWithTheEmail_Index].active === "1") {
-
-                        if (userPlatforms[platformsWithTheEmail_Index].withCredentials === "1") {
-                            console.log("el usuario tiene acceso a las credenciales de la cuenta")
-                            return true
-                        } else {
-                            throw new Error("El usuario con el contacto '" + userData.contact + "' no tiene Acceso´al correo " + userData.emailToCheck)
-
-                        }
-                    } else {
-                        throw new Error("El usuario con el contacto '" + userData.contact + "' no tiene activo el correo " + userData.emailToCheck)
-
-                    }
-
-                } else {
-                    throw new Error("El usuario con el contacto '" + userData.contact + "' no tiene Cuentas con el correo " + userData.emailToCheck)
-
-                }
-                ""
-            } else {
-                throw new Error("El usuario con el contacto '" + userData.contact + "' no tiene Cuentas")
-
-            }
-
-
-
-
-        } else {
-            throw new Error("El usuario con el contacto '" + userData.contact + "' ya no esta activo, por favor contacta con el vendedor para adquirir una cuenta nueva")
+        if (activeClients.length === 0) {
+            throw new Error("El usuario con el contacto '" + userData.contact + "' no existe o no está activo.");
         }
+
+        // 2. Extraemos los IDs de esos clientes para buscar sus plataformas
+        var clientIds = activeClients.map(c => c.id);
+
+        // 3. Filtramos las plataformas que pertenecen a esos IDs y coinciden con el correo
+        var targetEmail = userData.emailToCheck.toLowerCase();
+        var userPlatforms = platforms.data.filter(p => clientIds.includes(p.clientId) && p.email.toLowerCase() === targetEmail);
+
+        if (userPlatforms.length === 0) {
+            throw new Error("No se encontró el correo " + userData.emailToCheck + " asociado a su contacto.");
+        }
+
+        // 4. Verificamos las condiciones de la plataforma encontrada (tomamos la primera coincidencia válida)
+        // Buscamos una que esté activa y tenga credenciales permitidas
+        var validPlatform = userPlatforms.find(p => p.active === "1" && p.withCredentials === "1");
+
+        if (validPlatform) {
+            // Actualizamos theContact con el nombre del cliente dueño de esa plataforma específica
+            var owner = activeClients.find(c => c.id === validPlatform.clientId);
+            theContact = userData.contact;
+            
+            console.log("Autorizado: " + theContact);
+            return true;
+        } else {
+            // Si encontró plataformas pero ninguna cumple los requisitos
+            var inactive = userPlatforms.find(p => p.active !== "1");
+            if (inactive) throw new Error("La cuenta " + userData.emailToCheck + " no está activa actualmente.");
+            
+            throw new Error("No tienes permiso para ver credenciales de " + userData.emailToCheck);
+        }
+
     } catch (err) {
+        console.log("Error en Verificación: " + err.message);
         return err.message;
     }
 }
