@@ -796,7 +796,7 @@ function main(e) {
 
     // 3. Búsqueda en Gmail
     var searchQuery = 'to:' + targetEmail;
-    var threads = GmailApp.search(searchQuery, 0, 10); 
+    var threads = GmailApp.search(searchQuery, 0, 15); 
 
     if (threads.length === 0) {
       throw new Error("No se encontraron hilos para " + targetEmail);
@@ -811,7 +811,7 @@ function main(e) {
       
       // 1. .slice(-30) toma los últimos 30 mensajes (los más nuevos cronológicamente)
       // 2. .reverse() los voltea para que el índice [0] sea el último que llegó
-      var messagesReverse = allMessages.slice(-30).reverse();
+      var messagesReverse = allMessages.slice(-100).reverse();
 
       // 5. Bucle de Mensajes dentro del hilo
       for (var m = 0; m < messagesReverse.length; m++) {
