@@ -861,6 +861,8 @@ function main(e) {
       timeAgo(dateObj);
 
     response = Object.assign(response, codeResponse);
+    //SE PASA EL NOMBRE DE PERFIL PARA LA WEBAPP
+    if(context.profileName) response.profileName = context.profileName;
     response.contact = theContact;
 
   } catch (err) {
