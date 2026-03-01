@@ -691,7 +691,7 @@ function extractCode(htmlText, subject, context={}) {
     // --- Función interna para centralizar la salida ---
     // Esto asegura que si es GAS, procesamos el link antes de devolverlo
     const finalizar = (res) => {
-        console.log("es de "+res.keyword)
+        console.log("es de "+context.keyword)
         if (getEnvironment() === "GAS" && res.noError) {
             // Aquí se ejecutan las llamadas a is.gd o Netflix Travel
             processIfLink(res, context);
