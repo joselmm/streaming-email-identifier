@@ -188,77 +188,51 @@ function getEnvironment() {
   if (getEnvironment()==="GAS") {
     
     // Solo si estamos en GAS, definimos la función en el scope global
-    global.shortUrl = function (url) {
+  global.shortUrl = function (url) {
   try {
-    const endpoint = "https://is.gd/create.php";
+    // 1. Apuntamos a tu nuevo servidor (reemplaza con tu subdominio real)
+    const baseUrl = "https://a.cuenticas.com";
     
-    const headers = {
-      "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-      "accept-language": "en-US,en;q=0.9,es-CO;q=0.8,es-ES;q=0.7,es;q=0.6",
-      "cache-control": "max-age=0",
-      "priority": "u=0, i",
-      "sec-ch-ua": "\"Chromium\";v=\"140\", \"Not=A?Brand\";v=\"24\", \"Google Chrome\";v=\"140\"",
-      "sec-ch-ua-arch": "\"x86\"",
-      "sec-ch-ua-bitness": "\"64\"",
-      "sec-ch-ua-full-version": "\"140.0.7339.185\"",
-      "sec-ch-ua-full-version-list": "\"Chromium\";v=\"140.0.7339.185\", \"Not=A?Brand\";v=\"24.0.0.0\", \"Google Chrome\";v=\"140.0.7339.185\"",
-      "sec-ch-ua-mobile": "?0",
-      "sec-ch-ua-model": "\"\"",
-      "sec-ch-ua-platform": "\"Windows\"",
-      "sec-ch-ua-platform-version": "\"10.0.0\"",
-      "sec-fetch-dest": "document",
-      "sec-fetch-mode": "navigate",
-      "sec-fetch-site": "same-origin",
-      "sec-fetch-user": "?1",
-      "upgrade-insecure-requests": "1",
-      "Referer": "https://is.gd/",
-      // Agrego User-Agent para completar la simulación de navegador
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-    };
-
+    // 2. Construimos la URL con el parámetro GET que Express espera
+    const endpoint = baseUrl + "/short?url=" + encodeURIComponent(url);
+    
+    // 3. Opciones muy simplificadas
     const options = {
-      "method": "post",
-      "headers": headers,
-      "contentType": "application/x-www-form-urlencoded",
-      "payload": "url=" + encodeURIComponent(url) + "&shorturl=&opt=0",
-      "muteHttpExceptions": true // Fundamental para manejar errores manualmente
+      "method": "get",
+      "muteHttpExceptions": true // Nos permite leer tu "noError: false" sin que GAS rompa el script
     };
 
+    // 4. Hacemos la petición a tu API
     const response = UrlFetchApp.fetch(endpoint, options);
     const responseCode = response.getResponseCode();
-    const text = response.getContentText();
+    const jsonText = response.getContentText();
 
-    // --- Manejo de Errores HTTP ---
+    // --- Manejo de Errores HTTP de tu Servidor ---
     if (responseCode !== 200) {
-      console.error("Error HTTP: " + responseCode);
-      console.error("Cuerpo del error: " + text);
-      
-      if (responseCode === 502 || responseCode === 503) {
-        console.warn("El servicio is.gd parece estar sobrecargado o caído.");
-      } else if (responseCode === 403) {
-        console.warn("Acceso denegado. Posible bloqueo por exceso de peticiones.");
-      }
+      console.error("Error HTTP en mi servidor: " + responseCode);
+      console.error("Respuesta del servidor: " + jsonText);
       return null;
     }
 
-    // --- Procesamiento de Respuesta Exitosa (200 OK) ---
-    const match = text.match(/"https:\/\/is.gd\/[^"]+"/g);
-    const result = match !== null ? match[0].slice(1, -1) : null;
+    // --- Procesamiento de tu Respuesta JSON ---
+    // Como tu Express devuelve JSON, lo parseamos directamente
+    const data = JSON.parse(jsonText);
 
-    if (!result) {
-      console.warn("No se encontró la URL acortada en el HTML. Posible cambio en la interfaz de is.gd.");
+    // Verificamos la bandera 'noError' que creamos en tu Express
+    if (data.noError === true) {
+      console.log("Resultado de mi acortador: " + data.shortUrl);
+      return data.shortUrl;
+    } else {
+      console.warn("Mi servidor rechazó la petición: " + data.message);
+      return null;
     }
 
-    console.log("Resultado de acortador: " + result);
-    return result;
-
   } catch (error) {
-    // Errores de red o de ejecución (timeout, URL mal formada, etc.)
-    console.error("Excepción detectada: " + error.toString());
+    // Errores de red de Google o fallos al parsear el JSON
+    console.error("Excepción detectada en GAS: " + error.toString());
     return null;
   }
-}
-
+};
 
 
     global.getNetflixTravelCode = function(url) {
