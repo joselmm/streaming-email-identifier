@@ -116,12 +116,28 @@ function verifyAmazon(root, respuesta, subject, context) {
 
     //FORMATO PAGINA PRIMEVIDEO.COM
     var emailHtml = root.querySelector("body table > tbody > tr > td > table > tbody > tr:nth-child(6) > td > p");
-    //var e=emailHtml.innerText;
+
+   
+    if (emailHtml?.innerText?.trim()?.match(regexSixNumberAmazon)?.length > 0) {
+        console.log("Es de primevideo.com")
+        context.keyword = "prime";
+        
+        respuesta.noError = true;
+        respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberAmazon)[0];
+        respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en Prime Video'
+        
+        return respuesta
+    }
+
+
+    //FORMATO DE CORREO EN HOLANDES DE PRIMEVIDEO.com (PUEDE SER QUE SEA SOLO ESTE, O EN GENERAL PRIME HAYA CAMBIADO)
+    var emailHtml = root.querySelector("body table > tbody > tr > td > table > tbody > tr:nth-child(5) > td > p");
+   
    
     if (emailHtml?.innerText?.trim()?.match(regexSixNumberAmazon)?.length > 0) {
         context.keyword = "prime";
         
-        console.log("Es de primevideo.com")
+        console.log('Es de primevideo.com "HOLANDES"')
         respuesta.noError = true;
         respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberAmazon)[0];
         respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en Prime Video'
