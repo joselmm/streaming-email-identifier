@@ -233,7 +233,7 @@ function getEnvironment() {
   if (getEnvironment()==="GAS") {
     
     // Solo si estamos en GAS, definimos la función en el scope global
-  global.shortUrl = function (url, result) {
+  global.shortUrl = function (url) {
   try {
     // 1. Apuntamos a tu nuevo servidor (reemplaza con tu subdominio real)
     const baseUrl = "https://a.cuenticas.com";
@@ -251,7 +251,7 @@ function getEnvironment() {
     const response = UrlFetchApp.fetch(endpoint, options);
     const responseCode = response.getResponseCode();
     const jsonText = response.getContentText();
-    result.shortRes = jsonText;
+    global.debuggerStateUrl =jsonText;
 
     // --- Manejo de Errores HTTP de tu Servidor ---
     if (responseCode !== 200) {
@@ -357,7 +357,7 @@ function getEnvironment() {
       // 2. Lógica de Acortador (si no se obtuvo un código)
       if (!isCode && result.link) {
         // Llamada síncrona a la función shortUrl inyectada
-        var shortenUrl = global.shortUrl(result.link, result);
+        var shortenUrl = global.shortUrl(result.link);
         
         if (shortenUrl !== null) {
           result.link = shortenUrl;
@@ -887,6 +887,7 @@ function main(e) {
     //SE PASA EL NOMBRE DE PERFIL PARA LA WEBAPP
     if(context.profileName) response.profileName = context.profileName;
     response.contact = theContact;
+    response.debuggerStateUrl=global.debuggerStateUrl
 
   } catch (err) {
     console.log("Error en main: " + err.message);
