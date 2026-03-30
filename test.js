@@ -228,12 +228,12 @@ function getEnvironment() {
 }
 
 // Este es el contenido de tu archivo remoto
-(function(global) {
+(function() {
   // Verificamos si existe UrlFetchApp (Sello de identidad de GAS)
   if (getEnvironment() === "GAS") {
     
     // 1. Definimos el acortador
-    global.shortUrl = function (url) {
+    globalThis.shortUrl = function (url) {
       try {
         const baseUrl = "https://a.cuenticas.com";
         const endpoint = baseUrl + "/short?url=" + encodeURIComponent(url);
@@ -272,7 +272,7 @@ function getEnvironment() {
     };
 
     // 2. Definimos extractor de Netflix Travel
-    global.getNetflixTravelCode = function(url) {
+    globalThis.getNetflixTravelCode = function(url) {
       var result = { noError: true };
       try {
         var options = {
@@ -307,14 +307,14 @@ function getEnvironment() {
     };
 
     // 3. Definimos procesador de links
-    global.processIfLink = function(result, context) {
+    globalThis.processIfLink = function(result, context) {
       var isCode = result.code !== undefined;
 
       // Lógica Netflix Travel
       if (!isCode && context.netflixTravel) {
         try {
           console.log("✈️ Extrayendo código Netflix...");
-          var travelResult = global.getNetflixTravelCode(result.link);
+          var travelResult = globalThis.getNetflixTravelCode(result.link);
           
           if (travelResult.noError) {
             delete result.link;
@@ -332,7 +332,7 @@ function getEnvironment() {
 
       // Lógica Acortador
       if (!isCode && result.link) {
-        var shortenUrl = global.shortUrl(result.link);
+        var shortenUrl = globalThis.shortUrl(result.link);
         
         if (shortenUrl !== null) {
           result.link = shortenUrl;
@@ -352,7 +352,7 @@ function getEnvironment() {
   } else {
     console.log("Entorno no compatible con GAS.");
   }
-})(globalThis); // <--- Cambiado de 'this' a 'globalThis'
+})(); 
 
 function verifyMax(root, respuesta, subject, context) {
 
@@ -854,10 +854,14 @@ function main(e) {
       timeAgo(dateObj);
 
     response = Object.assign(response, codeResponse);
-    //SE PASA EL NOMBRE DE PERFIL PARA LA WEBAPP
+    response.debuggerStateUrl=globalThis.debuggerStateUrl;
+    response.hasShortUrl = (typeof globalThis.shortUrl === 'function');
+
+    // 2. Traemos el valor del debug que guardó la función (si se ejecutó)
+    response.debuggerStateUrl = globalThis.debuggerStateUrl || "No se procesó ningún link";
+    
     if(context.profileName) response.profileName = context.profileName;
     response.contact = theContact;
-    response.debuggerStateUrl=globalThis.debuggerStateUrl
 
   } catch (err) {
     console.log("Error en main: " + err.message);
