@@ -1,6 +1,35 @@
 var theContact = "";
 var regexEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 
+function verifyVixSignInLink(root, respuesta, subject, context) {
+
+  if (subject?.includes("Inicia sesión en tu cuenta de Vix") === false) {
+    return respuesta;
+  }
+
+
+  if (context?.from?.includes("vix@vix.com") === false) {
+    return respuesta;
+  }
+
+  var linkElement = Array.from(root.querySelectorAll("a[style*='#ff5900'][style*='color:#FFFFFF;font-size:20px']"))?.filter(a => a.innerText.includes('Iniciar sesión'))[0] || null;
+
+  if (!linkElement) return respuesta;
+
+  var bodyText = root.querySelector('body').innerText;
+
+  if (!(bodyText.includes("Hemos recibido una solicitud para iniciar sesión en tu cuenta de Vix app.") && bodyText.includes("Este enlace expirará en 15 minutos por tu seguridad."))) return respuesta;
+
+  if (linkElement._attrs?.href?.startsWith('http://link.vix.com/ls/click?upn=')) {
+    respuesta.noError = true;
+    respuesta.about = 'Codigo para iniciar sesion en Vix (Valido por 15 min)';
+    respuesta.link = linkElement._attrs.href;
+
+  }
+
+  return respuesta;
+}
+
 
 function verifyChatGpt(root, respuesta, subject, context) {
 
@@ -724,6 +753,9 @@ function extractCode(htmlText, subject, context={}) {
     if (respuesta.noError) return finalizar(respuesta);
 
     verifyAppleTv(root, respuesta, subject, context)
+    if (respuesta.noError) return finalizar(respuesta);
+
+    verifyVixSignInLink(root, respuesta, subject, context)
     if (respuesta.noError) return finalizar(respuesta);
   
     return respuesta; // Si llega aquí, noError es false
