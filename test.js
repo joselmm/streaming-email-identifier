@@ -234,7 +234,7 @@ function getEnvironment() {
     
     // 1. Definimos el acortador
     globalThis.shortUrl = function(urlOriginal) {
-      globalThis.debuggerStateUrl = "Iniciando proceso POST...";
+     
       
       try {
         // Usamos el endpoint POST de tu servidor
@@ -248,12 +248,12 @@ function getEnvironment() {
           muteHttpExceptions: true
         };
     
-        globalThis.debuggerStateUrl = "Enviando payload al servidor...";
+       
         const respuesta = UrlFetchApp.fetch(urlServidor, opciones);
         const code = respuesta.getResponseCode();
         const contenido = respuesta.getContentText();
     
-        globalThis.debuggerStateUrl = "Respuesta recibida (" + code + "): " + contenido.substring(0, 50);
+       
     
         if (code >= 200 && code < 300) {
           const resJson = JSON.parse(contenido);
@@ -264,7 +264,7 @@ function getEnvironment() {
         
         return null;
       } catch (e) {
-        globalThis.debuggerStateUrl = "Error Crítico: " + e.toString();
+       
         return null;
       }
     };
@@ -855,10 +855,7 @@ function main(e) {
 
     response = Object.assign(response, codeResponse);
  
-    response.hasShortUrl = (typeof globalThis.shortUrl === 'function');
 
-    // 2. Traemos el valor del debug que guardó la función (si se ejecutó)
-    response.debuggerStateUrl = globalThis.debuggerStateUrl || "No se procesó ningún link";
     
     if(context.profileName) response.profileName = context.profileName;
     response.contact = theContact;
