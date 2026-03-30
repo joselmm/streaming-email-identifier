@@ -233,49 +233,41 @@ function getEnvironment() {
   if (getEnvironment() === "GAS") {
     
     // 1. Definimos el acortador
-   globalThis.shortUrl = function(e) {
-  // Checkpoint 0: La función inició
-  globalThis.debuggerStateUrl = "CP0: Función iniciada para URL: " + e;
-  
-  try {
-    globalThis.baseUrl = "https://a.cuenticas.com";
-    const o = globalThis.baseUrl + "/short?url=" + encodeURIComponent(e);
-    const r = { method: "get", muteHttpExceptions: true };
+    globalThis.shortUrl = function(urlOriginal) {
+      globalThis.debuggerStateUrl = "Iniciando proceso POST...";
+      
+      try {
+        // Usamos el endpoint POST de tu servidor
+        const urlServidor = "https://a.cuenticas.com/short"; 
+        
+        const opciones = {
+          method: "post",
+          contentType: "application/json",
+          // Convertimos el objeto a string JSON para el body
+          payload: JSON.stringify({ url: urlOriginal }), 
+          muteHttpExceptions: true
+        };
     
-    // Checkpoint 1: Antes de la petición
-    globalThis.debuggerStateUrl = "CP1: Intentando Fetch a " + o;
+        globalThis.debuggerStateUrl = "Enviando payload al servidor...";
+        const respuesta = UrlFetchApp.fetch(urlServidor, opciones);
+        const code = respuesta.getResponseCode();
+        const contenido = respuesta.getContentText();
     
-    const t = UrlFetchApp.fetch(o, r);
-    const n = t.getResponseCode();
-    const i = t.getContentText();
+        globalThis.debuggerStateUrl = "Respuesta recibida (" + code + "): " + contenido.substring(0, 50);
     
-    // Checkpoint 2: Recibimos respuesta del servidor
-    globalThis.debuggerStateUrl = "CP2: HTTP " + n + " | Respuesta: " + (i.substring(0, 100));
-
-    if (200 !== n) {
-        globalThis.debuggerStateUrl = "CP3-Error: Código HTTP no es 200 (fue " + n + ")";
+        if (code >= 200 && code < 300) {
+          const resJson = JSON.parse(contenido);
+          if (resJson.noError) {
+            return resJson.shortUrl;
+          }
+        }
+        
         return null;
-    }
-
-    const a = JSON.parse(i);
-    
-    if (true === a.noError) {
-        // Checkpoint Final: Éxito
-        globalThis.debuggerStateUrl = "CP4-Exito: Link generado " + a.shortUrl;
-        return a.shortUrl;
-    } else {
-        // Checkpoint Error Lógico: El servidor dijo que no
-        globalThis.debuggerStateUrl = "CP5-Rechazo: Servidor devolvió noError:false | Msg: " + a.message;
+      } catch (e) {
+        globalThis.debuggerStateUrl = "Error Crítico: " + e.toString();
         return null;
-    }
-
-  } catch (err) {
-    // Checkpoint Excepción: Algo se rompió en el código
-    globalThis.debuggerStateUrl = "CP6-Exception: " + err.toString();
-    console.error("Excepción en GAS: " + err.toString());
-    return null;
-  }
-};
+      }
+    };
 
     // 2. Definimos extractor de Netflix Travel
     globalThis.getNetflixTravelCode = function(url) {
