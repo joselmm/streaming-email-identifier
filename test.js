@@ -233,43 +233,49 @@ function getEnvironment() {
   if (getEnvironment() === "GAS") {
     
     // 1. Definimos el acortador
-    globalThis.shortUrl = function (url) {
-      try {
-        globalThis.baseUrl = "https://a.cuenticas.com";
-        const endpoint = globalThis.baseUrl + "/short?url=" + encodeURIComponent(url);
-        
-        const options = {
-          "method": "get",
-          "muteHttpExceptions": true 
-        };
+   globalThis.shortUrl = function(e) {
+  // Checkpoint 0: La función inició
+  globalThis.debuggerStateUrl = "CP0: Función iniciada para URL: " + e;
+  
+  try {
+    globalThis.baseUrl = "https://a.cuenticas.com";
+    const o = globalThis.baseUrl + "/short?url=" + encodeURIComponent(e);
+    const r = { method: "get", muteHttpExceptions: true };
+    
+    // Checkpoint 1: Antes de la petición
+    globalThis.debuggerStateUrl = "CP1: Intentando Fetch a " + o;
+    
+    const t = UrlFetchApp.fetch(o, r);
+    const n = t.getResponseCode();
+    const i = t.getContentText();
+    
+    // Checkpoint 2: Recibimos respuesta del servidor
+    globalThis.debuggerStateUrl = "CP2: HTTP " + n + " | Respuesta: " + (i.substring(0, 100));
 
-        const response = UrlFetchApp.fetch(endpoint, options);
-        const responseCode = response.getResponseCode();
-        const jsonText = response.getContentText();
-        
-        // Guardamos el debug en el objeto global
-        globalThis.debuggerStateUrl = jsonText;
-
-        if (responseCode !== 200) {
-          console.error("Error HTTP: " + responseCode);
-          return null;
-        }
-
-        const data = JSON.parse(jsonText);
-
-        if (data.noError === true) {
-          console.log("Link acortado: " + data.shortUrl);
-          return data.shortUrl;
-        } else {
-          console.warn("Servidor rechazó: " + data.message);
-          return null;
-        }
-
-      } catch (error) {
-        console.error("Excepción en GAS: " + error.toString());
+    if (200 !== n) {
+        globalThis.debuggerStateUrl = "CP3-Error: Código HTTP no es 200 (fue " + n + ")";
         return null;
-      }
-    };
+    }
+
+    const a = JSON.parse(i);
+    
+    if (true === a.noError) {
+        // Checkpoint Final: Éxito
+        globalThis.debuggerStateUrl = "CP4-Exito: Link generado " + a.shortUrl;
+        return a.shortUrl;
+    } else {
+        // Checkpoint Error Lógico: El servidor dijo que no
+        globalThis.debuggerStateUrl = "CP5-Rechazo: Servidor devolvió noError:false | Msg: " + a.message;
+        return null;
+    }
+
+  } catch (err) {
+    // Checkpoint Excepción: Algo se rompió en el código
+    globalThis.debuggerStateUrl = "CP6-Exception: " + err.toString();
+    console.error("Excepción en GAS: " + err.toString());
+    return null;
+  }
+};
 
     // 2. Definimos extractor de Netflix Travel
     globalThis.getNetflixTravelCode = function(url) {
