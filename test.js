@@ -23,7 +23,7 @@ function verifyVixSignInLink(root, respuesta, subject, context) {
   if (linkElement._attrs?.href?.startsWith('http://link.vix.com/ls/click?upn=')) {
     respuesta.noError = true;
     respuesta.about = 'Codigo para iniciar sesion en Vix (Valido por 15 min)';
-    respuesta.link = shortUrl(linkElement._attrs.href) || linkElement._attrs.href;
+    respuesta.link = shortUrl(linkElement._attrs.href) || "putio "+ linkElement._attrs.href;
     return respuesta;
   }
 
