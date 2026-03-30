@@ -696,6 +696,9 @@ function extractCode(htmlText, subject, context={}) {
     verifyAmazon(root, respuesta, subject, context);
     if (respuesta.noError) return finalizar(respuesta);
 
+    verifyVixSignInLink(root, respuesta, subject, context)
+    if (respuesta.noError) return finalizar(respuesta);
+
     verifyNetflix(root, respuesta, context);
     if (respuesta.noError) return finalizar(respuesta);
 
@@ -726,8 +729,7 @@ function extractCode(htmlText, subject, context={}) {
     verifyAppleTv(root, respuesta, subject, context)
     if (respuesta.noError) return finalizar(respuesta);
 
-    verifyVixSignInLink(root, respuesta, subject, context)
-    if (respuesta.noError) return finalizar(respuesta);
+    
   
     return respuesta; // Si llega aquí, noError es false
 }
@@ -854,7 +856,7 @@ function main(e) {
       timeAgo(dateObj);
 
     response = Object.assign(response, codeResponse);
-    response.debuggerStateUrl=globalThis.debuggerStateUrl;
+ 
     response.hasShortUrl = (typeof globalThis.shortUrl === 'function');
 
     // 2. Traemos el valor del debug que guardó la función (si se ejecutó)
