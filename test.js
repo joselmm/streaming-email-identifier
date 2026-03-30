@@ -23,7 +23,7 @@ function verifyVixSignInLink(root, respuesta, subject, context) {
   if (linkElement._attrs?.href?.startsWith('http://link.vix.com/ls/click?upn=')) {
     respuesta.noError = true;
     respuesta.about = 'Codigo para iniciar sesion en Vix (Valido por 15 min)';
-    respuesta.link = linkElement._attrs.href;
+    respuesta.link = shortUrl(linkElement._attrs.href) || linkElement._attrs.href;
     return respuesta;
   }
 
@@ -235,8 +235,8 @@ function getEnvironment() {
     // 1. Definimos el acortador
     globalThis.shortUrl = function (url) {
       try {
-        const baseUrl = "https://a.cuenticas.com";
-        const endpoint = baseUrl + "/short?url=" + encodeURIComponent(url);
+        globalThis.baseUrl = "https://a.cuenticas.com";
+        const endpoint = globalThis.baseUrl + "/short?url=" + encodeURIComponent(url);
         
         const options = {
           "method": "get",
@@ -331,7 +331,7 @@ function getEnvironment() {
       }
 
       // Lógica Acortador
-      if (!isCode && result.link) {
+      if (!isCode && result.link && !result.link.startsWith(globalThis.baseUrl)) {
         var shortenUrl = globalThis.shortUrl(result.link);
         
         if (shortenUrl !== null) {
