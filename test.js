@@ -24,7 +24,7 @@ function verifyVixSignInLink(root, respuesta, subject, context) {
     respuesta.noError = true;
     respuesta.about = 'Codigo para iniciar sesion en Vix (Valido por 15 min)';
     respuesta.link = linkElement._attrs.href;
-
+    return respuesta;
   }
 
   return respuesta;
