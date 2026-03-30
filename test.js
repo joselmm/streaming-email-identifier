@@ -230,61 +230,51 @@ function getEnvironment() {
 // Este es el contenido de tu archivo remoto
 (function(global) {
   // Verificamos si existe UrlFetchApp (Sello de identidad de GAS)
-  if (getEnvironment()==="GAS") {
+  if (getEnvironment() === "GAS") {
     
-    // Solo si estamos en GAS, definimos la función en el scope global
-  global.shortUrl = function (url) {
-  try {
-    // 1. Apuntamos a tu nuevo servidor (reemplaza con tu subdominio real)
-    const baseUrl = "https://a.cuenticas.com";
-    
-    // 2. Construimos la URL con el parámetro GET que Express espera
-    const endpoint = baseUrl + "/short?url=" + encodeURIComponent(url);
-    
-    // 3. Opciones muy simplificadas
-    const options = {
-      "method": "get",
-      "muteHttpExceptions": true // Nos permite leer tu "noError: false" sin que GAS rompa el script
+    // 1. Definimos el acortador
+    global.shortUrl = function (url) {
+      try {
+        const baseUrl = "https://a.cuenticas.com";
+        const endpoint = baseUrl + "/short?url=" + encodeURIComponent(url);
+        
+        const options = {
+          "method": "get",
+          "muteHttpExceptions": true 
+        };
+
+        const response = UrlFetchApp.fetch(endpoint, options);
+        const responseCode = response.getResponseCode();
+        const jsonText = response.getContentText();
+        
+        // Guardamos el debug en el objeto global
+        globalThis.debuggerStateUrl = jsonText;
+
+        if (responseCode !== 200) {
+          console.error("Error HTTP: " + responseCode);
+          return null;
+        }
+
+        const data = JSON.parse(jsonText);
+
+        if (data.noError === true) {
+          console.log("Link acortado: " + data.shortUrl);
+          return data.shortUrl;
+        } else {
+          console.warn("Servidor rechazó: " + data.message);
+          return null;
+        }
+
+      } catch (error) {
+        console.error("Excepción en GAS: " + error.toString());
+        return null;
+      }
     };
 
-    // 4. Hacemos la petición a tu API
-    const response = UrlFetchApp.fetch(endpoint, options);
-    const responseCode = response.getResponseCode();
-    const jsonText = response.getContentText();
-    global.debuggerStateUrl =jsonText;
-
-    // --- Manejo de Errores HTTP de tu Servidor ---
-    if (responseCode !== 200) {
-      console.error("Error HTTP en mi servidor: " + responseCode);
-      console.error("Respuesta del servidor: " + jsonText);
-      return null;
-    }
-
-    // --- Procesamiento de tu Respuesta JSON ---
-    // Como tu Express devuelve JSON, lo parseamos directamente
-    const data = JSON.parse(jsonText);
-
-    // Verificamos la bandera 'noError' que creamos en tu Express
-    if (data.noError === true) {
-      console.log("Resultado de mi acortador: " + data.shortUrl);
-      return data.shortUrl;
-    } else {
-      console.warn("Mi servidor rechazó la petición: " + data.message);
-      return null;
-    }
-
-  } catch (error) {
-    // Errores de red de Google o fallos al parsear el JSON
-    console.error("Excepción detectada en GAS: " + error.toString());
-    return null;
-  }
-};
-
-
+    // 2. Definimos extractor de Netflix Travel
     global.getNetflixTravelCode = function(url) {
       var result = { noError: true };
       try {
-        // En GAS, las opciones suelen incluir headers para evitar bloqueos
         var options = {
           "method": "get",
           "muteHttpExceptions": true,
@@ -296,27 +286,18 @@ function getEnvironment() {
         var httpRes = UrlFetchApp.fetch(url, options);
         var responseCode = httpRes.getResponseCode();
 
-        if (responseCode < 200 || responseCode >= 300) {
-          throw new Error("HTTP " + responseCode);
-        }
+        if (responseCode < 200 || responseCode >= 300) throw new Error("HTTP " + responseCode);
 
         var htmlRawText = httpRes.getContentText();
-        
-        // Usamos el parser que ya tienes configurado en tu GAS
         var document = NodeHtmlParser.parse(htmlRawText);
-        
-        // querySelector funciona igual si el parser es compatible con esa sintaxis
         var codeElement = document.querySelector('[data-uia="travel-verification-otp"]');
 
         if (codeElement && codeElement.text) {
-          // Nota: Dependiendo de la versión de NodeHtmlParser, 
-          // a veces se usa .text o .textContent o .innerText
           result.code = codeElement.text.trim();
         } else {
           result.noError = false;
-          result.errorMessage = "No se encontró el código en el HTML";
+          result.errorMessage = "No se encontró el código";
         }
-
       } catch (error) {
         result.noError = false;
         result.errorMessage = error.toString();
@@ -325,64 +306,53 @@ function getEnvironment() {
       }
     };
 
+    // 3. Definimos procesador de links
     global.processIfLink = function(result, context) {
-      // En GAS no usamos async, así que 'isCode' se evalúa linealmente
       var isCode = result.code !== undefined;
 
-      // 1. Lógica para Netflix Travel
+      // Lógica Netflix Travel
       if (!isCode && context.netflixTravel) {
         try {
-          console.log("✈️✈️✈️ Tratando de extraer codigo de viaje netflix");
-          
-          // Llamada síncrona a la función que ya inyectamos antes
+          console.log("✈️ Extrayendo código Netflix...");
           var travelResult = global.getNetflixTravelCode(result.link);
           
           if (travelResult.noError) {
             delete result.link;
             result.code = travelResult.code;
-            
             if (result.ifIsCodeAbout) {
               result.about = result.ifIsCodeAbout;
               delete result.ifIsCodeAbout;
             }
             isCode = true;
-          } else {
-            throw new Error(travelResult.errorMessage);
           }
         } catch (error) {
-          console.warn('✈️✈️✈️ No se pudo extraer codigo viaje netflix: ' + error.toString());
+          console.warn('Error en Travel: ' + error.toString());
         }
       }
 
-      // 2. Lógica de Acortador (si no se obtuvo un código)
+      // Lógica Acortador
       if (!isCode && result.link) {
-        // Llamada síncrona a la función shortUrl inyectada
         var shortenUrl = global.shortUrl(result.link);
         
         if (shortenUrl !== null) {
           result.link = shortenUrl;
 
-          // Modificación para Netflix Link TV
           if (context.netflixLinkTv) {
             var slug = shortenUrl.split("/").pop();
             result.link = "https://ntv.cuenticas.pro/#" + slug;
-            console.log("Netflix Link TV: " + result.link);
           }
 
-          // Modificación para Crunchyroll Aprobar
           if (context.crunchyAprobarLink) {
             var slug = shortenUrl.split("/").pop();
             result.link = "https://ac.cuenticas.com/#" + slug;
-            console.log("Crunchy Link: " + result.link);
           }
         }
       }
     };
   } else {
-    // Si estamos en Node, este código no hace nada
-    console.log("Node: Se evitó la inyección automática para no sobrescribir.");
+    console.log("Entorno no compatible con GAS.");
   }
-})(this);
+})(globalThis); // <--- Cambiado de 'this' a 'globalThis'
 
 function verifyMax(root, respuesta, subject, context) {
 
@@ -887,7 +857,7 @@ function main(e) {
     //SE PASA EL NOMBRE DE PERFIL PARA LA WEBAPP
     if(context.profileName) response.profileName = context.profileName;
     response.contact = theContact;
-    response.debuggerStateUrl=global.debuggerStateUrl
+    response.debuggerStateUrl=globalThis.debuggerStateUrl
 
   } catch (err) {
     console.log("Error en main: " + err.message);
