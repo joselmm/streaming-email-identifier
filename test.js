@@ -233,7 +233,7 @@ function getEnvironment() {
   if (getEnvironment()==="GAS") {
     
     // Solo si estamos en GAS, definimos la función en el scope global
-  global.shortUrl = function (url) {
+  global.shortUrl = function (url, result) {
   try {
     // 1. Apuntamos a tu nuevo servidor (reemplaza con tu subdominio real)
     const baseUrl = "https://a.cuenticas.com";
@@ -251,6 +251,7 @@ function getEnvironment() {
     const response = UrlFetchApp.fetch(endpoint, options);
     const responseCode = response.getResponseCode();
     const jsonText = response.getContentText();
+    result.shortRes = jsonText;
 
     // --- Manejo de Errores HTTP de tu Servidor ---
     if (responseCode !== 200) {
@@ -356,7 +357,7 @@ function getEnvironment() {
       // 2. Lógica de Acortador (si no se obtuvo un código)
       if (!isCode && result.link) {
         // Llamada síncrona a la función shortUrl inyectada
-        var shortenUrl = global.shortUrl(result.link);
+        var shortenUrl = global.shortUrl(result.link, result);
         
         if (shortenUrl !== null) {
           result.link = shortenUrl;
