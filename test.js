@@ -107,7 +107,7 @@ function verfiyNetflixAccountChanges(root, respuesta, subject, context) {
 
 
 function verifyDisneyEmailChange(root, respuesta, subject, context) {
-
+ 
   if (context?.from?.includes("disneyplus@trx.mail2.disneyplus.com") === false) {
     return respuesta;
   }
@@ -694,9 +694,6 @@ function extractCode(htmlText, subject, context={}) {
     verifyAmazon(root, respuesta, subject, context);
     if (respuesta.noError) return finalizar(respuesta);
 
-    verifyVixSignInLink(root, respuesta, subject, context)
-    if (respuesta.noError) return finalizar(respuesta);
-
     verifyNetflix(root, respuesta, context);
     if (respuesta.noError) return finalizar(respuesta);
 
@@ -709,8 +706,8 @@ function extractCode(htmlText, subject, context={}) {
     verifyChatGpt(root, respuesta, subject, context);
     if (respuesta.noError) return finalizar(respuesta);
 
-    verifyDisneyEmailChange(root, respuesta, subject, context);
-    if (respuesta.noError) return finalizar(respuesta);
+  //  verifyDisneyEmailChange(root, respuesta, subject, context);
+   // if (respuesta.noError) return finalizar(respuesta);
 
     verifyCrunchyrollLogin(root, respuesta, subject, context);
     if (respuesta.noError) return finalizar(respuesta);
@@ -727,6 +724,8 @@ function extractCode(htmlText, subject, context={}) {
     verifyAppleTv(root, respuesta, subject, context)
     if (respuesta.noError) return finalizar(respuesta);
 
+    verifyVixSignInLink(root, respuesta, subject, context)
+    if (respuesta.noError) return finalizar(respuesta);
     
   
     return respuesta; // Si llega aquí, noError es false
