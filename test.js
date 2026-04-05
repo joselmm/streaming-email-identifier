@@ -706,8 +706,8 @@ function extractCode(htmlText, subject, context={}) {
     verifyChatGpt(root, respuesta, subject, context);
     if (respuesta.noError) return finalizar(respuesta);
 
-  //  verifyDisneyEmailChange(root, respuesta, subject, context);
-   // if (respuesta.noError) return finalizar(respuesta);
+    verifyDisneyEmailChange(root, respuesta, subject, context);
+    if (respuesta.noError) return finalizar(respuesta);
 
     verifyCrunchyrollLogin(root, respuesta, subject, context);
     if (respuesta.noError) return finalizar(respuesta);
