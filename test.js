@@ -540,7 +540,13 @@ function verifyDisney(root, respuesta, context) {
   const regexSixNumberMax = /^\d{6}$/g;
 
   // 1. Validar remitente
-  if (!context?.from?.includes("disneyplus@trx.mail2.disneyplus.com")) {
+  const remitentesValidos = [
+    "disneyplus@trx.mail2.disneyplus.com",
+    "no-reply@my.disney.com"
+  ];
+  
+  // Si el remitente NO está incluido en ninguna de las direcciones válidas
+  if (!remitentesValidos.some(email => context?.from?.includes(email))) {
     return respuesta;
   }
 
