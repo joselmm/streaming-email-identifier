@@ -905,8 +905,7 @@ function VerifyContactAndEmail(userData, masterKey) {
 
             // 2. Buscar plataformas de esos clientes que coincidan con el email
             var clientIds = activeClients.map(c => c.id);
-            var userPlatforms = platforms.data.filter(p => clientIds.includes(p.clientId) && p.email.toLowerCase() === targetEmail);
-
+            var userPlatforms = platforms.data.filter(p => clientIds.includes(p.clientId) && p.email.toLowerCase().trim() === targetEmail.toLowerCase().trim());
             if (userPlatforms.length === 0) throw new Error("Correo " + userData.emailToCheck + " no asociado a este contacto.");
 
             // 3. Validar permisos de la plataforma encontrada
@@ -942,8 +941,7 @@ function VerifyContactAndEmail(userData, masterKey) {
                 theContact = clients.data[contactIndex].name + " (" + theContact + ")";
                 
                 var userPlatforms = platforms.data.filter(e => e.clientId === clients.data[contactIndex].id);
-                var platformIndex = userPlatforms.map(p => p.email.toLowerCase()).indexOf(targetEmail);
-
+                var platformIndex = userPlatforms.map(p => p.email.toLowerCase().trim()).indexOf(targetEmail.toLowerCase().trim());
                 if (platformIndex >= 0) {
                     var plat = userPlatforms[platformIndex];
                     if (plat.active === "1" && plat.withCredentials === "1") {
