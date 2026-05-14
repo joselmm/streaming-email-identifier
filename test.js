@@ -800,6 +800,10 @@ function main(e) {
       throw new Error("No se encontraron hilos para " + targetEmail);
     }
 
+    threads.sort(function(a, b) {
+      return b.getLastMessageDate().getTime() - a.getLastMessageDate().getTime();
+    });
+
     var codeResponse = null;
     var mensajeUsado = null;
 
