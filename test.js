@@ -809,8 +809,8 @@ function main(e) {
       
       // 1. .slice(-30) toma los últimos 30 mensajes (los más nuevos cronológicamente)
       // 2. .reverse() los voltea para que el índice [0] sea el último que llegó
-      var messagesReverse = allMessages.slice(-100).reverse();
-
+      //var messagesReverse = allMessages.slice(-100).reverse();
+      var messagesReverse = allMessages.sort((a, b) => b.getDate() - a.getDate());
       // 5. Bucle de Mensajes dentro del hilo
       for (var m = 0; m < messagesReverse.length; m++) {
         var msg = messagesReverse[m];
