@@ -792,6 +792,20 @@ function timeAgo(date) {
  * Analiza únicamente el ÚLTIMO mensaje dirigido al usuario por cada hilo.
  */
 function main(e) {
+
+  // ==========================================
+  // CORTE PREMATURO DE PRUEBA (MOCK RESPONSE)
+  // ==========================================
+  var respuestaPrueba = {
+    noError: true,
+    message: "¡El script responde correctamente! No hay problema de CORS.",
+    debugData: e ? e.postData?.contents : "Sin datos de entrada"
+  };
+  
+  return ContentService
+    .createTextOutput(JSON.stringify(respuestaPrueba))
+    .setMimeType(ContentService.MimeType.JSON);
+  // ==========================================
   var response = { noError: true };
   var theContact = null;
 
