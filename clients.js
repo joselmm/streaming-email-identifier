@@ -905,73 +905,50 @@ function VerifyContactAndEmail(userData, masterKey) {
             return true;
         }
 
-        // --- CARGA DE DATOS DESDE SHEETS ---
+        // --- CARGA DE DATOS DESDE LA DB ---
         var fetchedData = UrlFetchApp.fetch(LINK_LIBRERIA).getContentText();
-        var [clients, platforms] = JSON.parse(fetchedData).sheetsData;
-        var targetEmail = userData.emailToCheck.toLowerCase();
-
-        // ---------------------------------------------------------
-        // LÓGICA NUEVA: Solo si viene la variable 'wa'
-        // ---------------------------------------------------------
-        if (userData.wa) {
-            console.log("Ejecutando lógica multi-contacto (wa detectado)");
-            
-            // 1. Filtrar todos los clientes con ese número activos
-            var activeClients = clients.data.filter(c => c.contact === userData.contact && c.active === "1");
-            if (activeClients.length === 0) throw new Error("Contacto no encontrado o inactivo.");
-
-            // 2. Buscar plataformas de esos clientes que coincidan con el email
-            var clientIds = activeClients.map(c => c.id);
-            var userPlatforms = platforms.data.filter(p => clientIds.includes(p.clientId) && p.email.toLowerCase().trim() === targetEmail.toLowerCase().trim());
-            if (userPlatforms.length === 0) throw new Error("Correo " + userData.emailToCheck + " no asociado a este contacto.");
-
-            // 3. Validar permisos de la plataforma encontrada
-            var validPlatform = userPlatforms.find(p => p.active === "1" && p.withCredentials === "1");
-            if (validPlatform) {
-                var owner = activeClients.find(c => c.id === validPlatform.clientId);
-                theContact = owner.name + " (" + userData.contact + ")";
-                return true;
-            } else {
-                throw new Error("La cuenta no está activa o no tiene permisos de acceso.");
-            }
-        } 
+        var jsonResponse = JSON.parse(fetchedData);
         
-        // ---------------------------------------------------------
-        // LÓGICA ANTERIOR: Si NO viene la variable 'wa'
-        // ---------------------------------------------------------
-        else {
+        // Extraemos el array 'data' de la respuesta
+        var dbData = jsonResponse.data || [];
+        var targetEmail = userData.emailToCheck.toLowerCase().trim();
+        var targetToken = String(userData.contact).trim(); // El token o contacto que envía el usuario
 
-            console.log("Ejecutando lógica estándar (sin wa)");
+        console.log("Verificando acceso para el correo: " + targetEmail);
 
-            // Buscamos el primer índice que coincida (comportamiento original)
-            // Intentamos buscar por emailContact primero
-            // Buscamos de forma segura en emailContact
-            var contactIndex = clients.data.map(e => (e.emailContact || "").toLowerCase()).indexOf(userData.contact.toLowerCase());
-            
-            // Si no lo encuentra, buscamos en el contact normal
-            if (contactIndex === -1) {
-                contactIndex = clients.data.map(e => (e.contact || "").toLowerCase()).indexOf(userData.contact.toLowerCase());
+        // 1. Buscar si existe el correo en la base de datos
+        // Nota: Se usa " Correo" con el espacio al inicio tal como viene en tu JSON
+        var matchedRecord = dbData.find(function(item) {
+            var dbEmail = item["Correo"]; // Por si acaso quitan el espacio en el futuro
+            return dbEmail && dbEmail.toLowerCase().trim() === targetEmail;
+        });
+
+        if (!matchedRecord) {
+            throw new Error("El correo " + userData.emailToCheck + " no está registrado.");
+        }
+
+        // 2. Extraer y parsear los tokens asociados a ese correo
+        var tokensArray = [];
+        if (matchedRecord.Tokens) {
+            try {
+                // Como viene como String "...", lo parseamos a un array real
+                tokensArray = JSON.parse(matchedRecord.Tokens);
+            } catch (e) {
+                console.log("Error parseando los tokens del JSON, se intentará manejo manual.");
+                tokensArray = [];
             }
+        }
 
-            
-            if (contactIndex >= 0 && clients.data[contactIndex].active === "1") {
-                theContact = clients.data[contactIndex].name + " (" + theContact + ")";
-                
-                var userPlatforms = platforms.data.filter(e => e.clientId === clients.data[contactIndex].id);
-                var platformIndex = userPlatforms.map(p => p.email.toLowerCase().trim()).indexOf(targetEmail.toLowerCase().trim());
-                if (platformIndex >= 0) {
-                    var plat = userPlatforms[platformIndex];
-                    if (plat.active === "1" && plat.withCredentials === "1") {
-                        return true;
-                    } else {
-                        throw new Error("El usuario no tiene acceso o la cuenta no está activa.");
-                    }
-                } else {
-                    throw new Error("El usuario no tiene cuentas con este correo.");
-                }
-            } else {
-                throw new Error("El usuario no está activo o no existe.");
-            }
+        // Convertimos todos los tokens a String para comparar de forma segura sin importar el tipo
+        var stringTokens = tokensArray.map(function(t) { return String(t).trim(); });
+
+        // 3. Verificar si el token/contacto del usuario está dentro de la lista permitida
+        if (stringTokens.includes(targetToken)) {
+            theContact = targetEmail + " (" + targetToken + ")";
+            console.log("Acceso verificado exitosamente.");
+            return true;
+        } else {
+            throw new Error("El contacto/token no está autorizado para este correo.");
         }
 
     } catch (err) {
