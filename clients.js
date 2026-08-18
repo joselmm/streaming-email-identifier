@@ -374,34 +374,7 @@ function verifyMax(root, respuesta, subject, context) {
   return respuesta;
 }
 
-function verifyMaxPassReset(root, respuesta, subject, context) {
 
-    if (!(context?.from?.includes("no-reply@alerts.hbomax.com"))) {
-      return respuesta;
-    }
-    
-    context.keyword = "max";
-
-    var regexSixNumberMax = /^\d{6}$/g;
-    
-    if(!(subject.includes("Tu enlace para restablecer tu contraseña requerido a las") || subject.includes("Your HBO Max Password Reset Link as of") )) return respuesta;
-    //FORMATO CODIGO DE INICIO DE SESION EN LA WEB CON MAX:
-   var btnElement = root.querySelector('a[href^="https://auth.hbomax.com/set-new-password?passwordResetToken="]');
-
-    if (btnElement) {
-        context.sendJustIf='{max-reset-pass}';
-        console.log("Es de enlace para cambiar contraseña HBOMAX");
-        
-        respuesta.noError = true;
-        respuesta.link = parseAttributes(btnElement)?.href || "";
-        respuesta.about = 'Enlace para cambiar contraseña Hbomax'
-        
-        return respuesta
-    }
-
-    console.log("no es de Max");
-    return respuesta;
-}
 
 
 function verifyNetflix(root, respuesta, context) {
@@ -708,9 +681,6 @@ function extractCode(htmlText, subject, context={}) {
     if (respuesta.noError) return finalizar(respuesta);
 
     verifyCrunchyrollLogin(root, respuesta, subject, context);
-    if (respuesta.noError) return finalizar(respuesta);
-
-    verifyMaxPassReset(root, respuesta, subject, context);
     if (respuesta.noError) return finalizar(respuesta);
 
     verifyCrunchyPassReset(root, respuesta, subject, context);
