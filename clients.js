@@ -82,28 +82,7 @@ function verifyAppleTv(root, respuesta, subject, context) {
   return respuesta;
 }
 
-function verfiyNetflixAccountChanges(root, respuesta, subject, context) {
 
-  var sixDigitsRegex = /^\d{6}$/;
-  if (context?.from?.includes("info@account.netflix.com") === false) {
-    return respuesta;
-  }
-  var codeEle = root.querySelector("body > table > tbody > tr > td > table > tbody > tr:nth-child(2) > td > table:nth-child(3) > tbody > tr > td")
-  if (!codeEle) return respuesta;
-  if (!(codeEle.textContent && codeEle.textContent.trim() !== '')) return respuesta;
-  var regexMatch = codeEle.textContent.match(sixDigitsRegex)
-  if (regexMatch) {
-    context.keyword = 'netflix';
-    respuesta.noError = true;
-    respuesta.about = 'Codigo para cambios netflix (🚫 No Dar Al Cliente 🚫)';
-    context.sendJustIf = '{netflix-account-changes}'
-    respuesta.code = codeEle.textContent;
-    return respuesta
-    
-  }
-
-  return respuesta;
-}
 
 
 function verifyDisneyEmailChange(root, respuesta, subject, context) {
@@ -735,9 +714,6 @@ function extractCode(htmlText, subject, context={}) {
     if (respuesta.noError) return finalizar(respuesta);
 
     verifyCrunchyPassReset(root, respuesta, subject, context);
-    if (respuesta.noError) return finalizar(respuesta);
-
-    verfiyNetflixAccountChanges(root, respuesta, subject, context);
     if (respuesta.noError) return finalizar(respuesta);
 
     verifyAppleTv(root, respuesta, subject, context)
