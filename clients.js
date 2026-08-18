@@ -691,7 +691,10 @@ function extractCode(htmlText, subject, context={}) {
 
     verifyVixSignInLink(root, respuesta, subject, context)
     if (respuesta.noError) return finalizar(respuesta);
-    
+
+    verifyUniversal(root, respuesta, subject, context)
+    if (respuesta.noError) return finalizar(respuesta);
+
   
     return respuesta; // Si llega aquí, noError es false
 }
@@ -852,6 +855,33 @@ function main(e) {
   return ContentService
     .createTextOutput(JSON.stringify(response))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+
+function verifyUniversal(root, respuesta, subject, context) {
+
+  if (!(context?.from?.includes("no-reply@universalplus.com"))) {
+    return respuesta;
+  }
+
+  context.keyword = "universal";
+
+  var codeElement = root.querySelector('.pad [style*="margin:0;color:#000;direction:ltr;font-family:\'Open Sans\',Arial,Sans-serif;font-size:24px;font-weight:700;letter-spacing:normal;line-height:1.2;text-align:center;margin-top:0;margin-bottom:0;mso-line-height-alt:29px"] strong');
+
+  if (!codeElement) return respuesta;
+
+  if (codeElement?.innerText?.trim()?.length === 6) {
+
+    respuesta.noError = true;
+    respuesta.code = codeElement?.innerText?.trim();
+    respuesta.about = 'Codigo Para Iniciar Sesion en Universal+ (vence en 5 min)'
+    console.log("Es de Universal+ codigo de iniciar sesion");
+
+    return respuesta
+  }
+
+  console.log("no es de Universal+");
+  return respuesta;
 }
 
 function VerifyContactAndEmail(userData, masterKey) {
