@@ -738,23 +738,11 @@ function timeAgo(date) {
 
 /**
  * Función principal para procesar la solicitud POST.
- * Analiza únicamente el ÚLTIMO mensaje dirigido al usuario por cada hilo.
+ * Analiza mensajes dirigidos al usuario dentro de los hilos obtenidos.
+ * Soporta el parámetro opcional 'numResults'.
  */
 function main(e) {
 
-  // ==========================================
-  // CORTE PREMATURO DE PRUEBA (MOCK RESPONSE)
-  // ==========================================
- /* var respuestaPrueba = {
-    noError: true,
-    message: "¡El script responde correctamente! No hay problema de CORS.",
-    debugData: e ? e.postData?.contents : "Sin datos de entrada"
-  };
-  
-  return ContentService
-    .createTextOutput(JSON.stringify(respuestaPrueba))
-    .setMimeType(ContentService.MimeType.JSON);*/
-  // ==========================================
   var response = { noError: true };
   var theContact = null;
 
@@ -764,11 +752,17 @@ function main(e) {
     var targetEmail = userData.emailToCheck.toLowerCase();
     theContact = userData.contact || null;
 
+    // Determinamos la cantidad de resultados deseados (Por defecto 1)
+    var numResults = parseInt(userData.numResults, 10);
+    if (isNaN(numResults) || numResults < 1) {
+      numResults = 1;
+    }
+
     // 2. Verificación de seguridad
     var verify = VerifyContactAndEmail(userData, e.masterKey);
     if (verify !== true) throw new Error(verify);
 
-    // 3. Búsqueda en Gmail
+    // 3. Búsqueda en Gmail (se mantiene en 15 hilos igual que antes)
     var searchQuery = 'to:' + targetEmail;
     var threads = GmailApp.search(searchQuery, 0, 15); 
 
@@ -780,17 +774,13 @@ function main(e) {
       return b.getLastMessageDate().getTime() - a.getLastMessageDate().getTime();
     });
 
-    var codeResponse = null;
-    var mensajeUsado = null;
+    var matchesFound = [];
 
     // 4. Bucle de Hilos (Threads)
     for (var t = 0; t < threads.length; t++) {
       var allMessages = threads[t].getMessages();
-      
-      // 1. .slice(-30) toma los últimos 30 mensajes (los más nuevos cronológicamente)
-      // 2. .reverse() los voltea para que el índice [0] sea el último que llegó
-      //var messagesReverse = allMessages.slice(-100).reverse();
       var messagesReverse = allMessages.sort((a, b) => b.getDate() - a.getDate());
+
       // 5. Bucle de Mensajes dentro del hilo
       for (var m = 0; m < messagesReverse.length; m++) {
         var msg = messagesReverse[m];
@@ -807,43 +797,48 @@ function main(e) {
           var result = extractCode(htmlContent, subject, context);
           
           if (result && result.noError) {
-            codeResponse = result;
-            mensajeUsado = msg;
+            var dateObj = msg.getDate();
+            var itemResult = Object.assign({}, result);
+            
+            itemResult.estimatedTimeAgo =
+              dateObj.toLocaleTimeString('es-CO', { hour12: true }) +
+              " - " +
+              dateObj.toLocaleDateString("es-CO") +
+              "\n" +
+              timeAgo(dateObj);
+
+            if (context.profileName) itemResult.profileName = context.profileName;
+
+            matchesFound.push(itemResult);
           } else {
-            console.log("El último mensaje del hilo " + (t + 1) + " no era válido. Saltando al siguiente hilo...");
+            console.log("El mensaje en hilo " + (t + 1) + " no era válido. Saltando al siguiente...");
           }
 
-          // AQUI ESTÁ EL CAMBIO:
-          // Una vez encontrado el mensaje dirigido al correo (sea válido el código o no),
-          // rompemos el bucle de mensajes para no mirar más atrás en este hilo.
-          break; 
+          // Si ya alcanzamos la cantidad deseada de resultados, salimos del bucle de mensajes
+          if (matchesFound.length >= numResults) break;
         }
       }
 
-      // Si ya encontramos un código exitoso en el último mensaje de algún hilo, dejamos de buscar en otros hilos
-      if (codeResponse) break;
+      // Si alcanzamos el límite de coincidencias solicitado, detenemos la búsqueda en los hilos restantes
+      if (matchesFound.length >= numResults) break;
     }
 
     // 6. Validación final de resultados
-    if (!codeResponse) {
-      throw new Error("No se encontró código válido en el mensaje más reciente de los " + threads.length + " hilos analizados.");
+    if (matchesFound.length === 0) {
+      throw new Error("No se encontró código válido en los mensajes analizados de los " + threads.length + " hilos.");
     }
 
     // 7. Preparación de la respuesta
-    var dateObj = mensajeUsado.getDate();
-    response.estimatedTimeAgo =
-      dateObj.toLocaleTimeString('es-CO', { hour12: true }) +
-      " - " +
-      dateObj.toLocaleDateString("es-CO") +
-      "\n" +
-      timeAgo(dateObj);
-
-    response = Object.assign(response, codeResponse);
- 
-
-    
-    if(context.profileName) response.profileName = context.profileName;
-    response.contact = theContact;
+    if (numResults === 1) {
+      // MODO NORMAL (Mantiene compatibilidad exacta con la respuesta original)
+      response = Object.assign(response, matchesFound[0]);
+      response.contact = theContact;
+    } else {
+      // MODO MÚLTIPLE (Devuelve un array con la cantidad solicitada o encontradas)
+      response.contact = theContact;
+      response.totalFound = matchesFound.length;
+      response.results = matchesFound;
+    }
 
   } catch (err) {
     console.log("Error en main: " + err.message);
