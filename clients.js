@@ -741,6 +741,11 @@ function timeAgo(date) {
  * Analiza mensajes dirigidos al usuario dentro de los hilos obtenidos.
  * Soporta el parámetro opcional 'numResults'.
  */
+/**
+ * Función principal para procesar la solicitud POST.
+ * Analiza mensajes dirigidos al usuario dentro de los hilos obtenidos.
+ * Soporta los parámetros opcionales 'numResults' y 'keyword'.
+ */
 function main(e) {
 
   var response = { noError: true };
@@ -757,6 +762,9 @@ function main(e) {
     if (isNaN(numResults) || numResults < 1) {
       numResults = 1;
     }
+
+    // NUEVO: Capturar keyword opcional
+    var targetKeyword = userData.keyword ? userData.keyword.toLowerCase().trim() : null;
 
     // 2. Verificación de seguridad
     var verify = VerifyContactAndEmail(userData, e.masterKey);
@@ -797,19 +805,24 @@ function main(e) {
           var result = extractCode(htmlContent, subject, context);
           
           if (result && result.noError) {
-            var dateObj = msg.getDate();
-            var itemResult = Object.assign({}, result);
             
-            itemResult.estimatedTimeAgo =
-              dateObj.toLocaleTimeString('es-CO', { hour12: true }) +
-              " - " +
-              dateObj.toLocaleDateString("es-CO") +
-              "\n" +
-              timeAgo(dateObj);
+            // NUEVO: Filtrar por keyword solo si fue enviado en la petición
+            if (!targetKeyword || (context.keyword && context.keyword.toLowerCase() === targetKeyword)) {
+              
+              var dateObj = msg.getDate();
+              var itemResult = Object.assign({}, result);
+              
+              itemResult.estimatedTimeAgo =
+                dateObj.toLocaleTimeString('es-CO', { hour12: true }) +
+                " - " +
+                dateObj.toLocaleDateString("es-CO") +
+                "\n" +
+                timeAgo(dateObj);
 
-            if (context.profileName) itemResult.profileName = context.profileName;
+              if (context.profileName) itemResult.profileName = context.profileName;
 
-            matchesFound.push(itemResult);
+              matchesFound.push(itemResult);
+            }
           } else {
             console.log("El mensaje en hilo " + (t + 1) + " no era válido. Saltando al siguiente...");
           }
@@ -825,7 +838,10 @@ function main(e) {
 
     // 6. Validación final de resultados
     if (matchesFound.length === 0) {
-      throw new Error("No se encontró código válido en los mensajes analizados de los " + threads.length + " hilos.");
+      var errorMsg = targetKeyword 
+        ? "No se encontró ningún código válido para la plataforma seleccionada."
+        : "No se encontró código válido en los mensajes analizados de los " + threads.length + " hilos.";
+      throw new Error(errorMsg);
     }
 
     // 7. Preparación de la respuesta
