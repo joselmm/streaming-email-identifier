@@ -941,7 +941,7 @@ function setCacheChunked(baseKey, data, expirationInSeconds) {
  */
 function getSheetsDataWithCache(spreadSheetId) {
   var clients, platforms;
-  var fromCache = true;
+  var fromCache = null;
 
   // 1. Intentamos leer los datos guardados y el timestamp local
   clients = leerDePropiedades('CACHE_CLIENTES');
@@ -961,9 +961,11 @@ function getSheetsDataWithCache(spreadSheetId) {
 
       // Comparamos: si el archivo de Drive fue modificado después de nuestro último respaldo, actualizamos
       if (ultimaModificacionDrive > timestampGuardado) {
+        fromCache = false;
         necesitaActualizar = true;
         console.log("🔄 El archivo de Drive fue modificado. Actualizando caché...");
       } else {
+        fromCache = true;
         console.log("⚡ Usando datos desde ScriptProperties (sin cambios en Drive).");
       }
     } catch (e) {
@@ -1017,7 +1019,6 @@ function getSheetsDataWithCache(spreadSheetId) {
     guardarEnPropiedades('CACHE_PLATFORMS', platforms);
     guardarEnPropiedades('CACHE_TIMESTAMP', nuevoTimestamp);
 
-    fromCache = false;
   }
 
   return {
