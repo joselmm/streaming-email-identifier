@@ -1083,8 +1083,8 @@ function VerifyContactAndEmail(userData, masterKey) {
         // --- CARGA DE DATOS DESDE SHEETS USANDO TU CACHÉ ---
         var cachedData = getSheetsDataWithCache(spreadSheetId);
         
-        var clients = cachedData.hoja1;
-        var platforms = cachedData.hoja2;
+        var clients = cachedData.clients;
+        var platforms = cachedData.platforms;
         
         // Guardamos si se usó caché o no de forma global para usarlo luego en la respuesta
         globalFromCache = cachedData.fromCache;
