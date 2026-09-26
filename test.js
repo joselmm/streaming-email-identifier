@@ -935,50 +935,48 @@ function setCacheChunked(baseKey, data, expirationInSeconds) {
 /**
  * Obtiene los datos usando ScriptProperties, filtrando estrictamente solo los elementos activos.
  */
-function getSheetsDataWithCache() {
+function getSheetsDataWithCache(spreadSheetId) {
   var datosHoja1, datosHoja2;
   var fromCache = true;
 
-  // Intentamos leer de las propiedades del script
+  // 1. Intentamos leer de las propiedades del script
   datosHoja1 = leerDePropiedades('CACHE_CLIENTES');
   datosHoja2 = leerDePropiedades('CACHE_PLATFORMS');
 
+  // 2. Si no están guardadas, las descargamos de la URL
   if (!datosHoja1 || !datosHoja2) {
-    debugCacheInfo.status = "ACTUALIZADO_DESDE_URL";
-    
-    // Petición HTTP normal a tu librería
     var fetchedData = UrlFetchApp.fetch(LINK_LIBRERIA).getContentText();
     var parsedData = JSON.parse(fetchedData);
 
-    var rawClients = parsedData.sheetsData ? parsedData.sheetsData[0].data : (parsedData.clients || []);
-    var rawPlatforms = parsedData.sheetsData ? parsedData.sheetsData[1].data : (parsedData.platforms || []);
+    var rawClients = parsedData.sheetsData ? parsedData.sheetsData[0] : { data: [] };
+    var rawPlatforms = parsedData.sheetsData ? parsedData.sheetsData[1] : { data: [] };
 
-    // Filtramos para conservar ESTRICTAMENTE lo que esté activo en ambos
-    datosHoja1 = rawClients.filter(function(item) {
-      return item.active == 1 || item.active === true || item.active === "active";
+    // --- FILTRAR ESTRICTAMENTE SOLO LOS ACTIVOS ANTES DE GUARDAR ---
+    var soloClientesActivos = rawClients.data.filter(function(item) {
+      return item.active === "1" || item.active === 1 || item.active === true;
     });
 
-    datosHoja2 = rawPlatforms.filter(function(item) {
-      return item.active == 1 || item.active === true || item.active === "active";
+    var soloPlataformasActivas = rawPlatforms.data.filter(function(item) {
+      return item.active === "1" || item.active === 1 || item.active === true;
     });
 
-    // Guardamos permanentemente en las propiedades del script ya filtrado
+    // Reconstruimos la estructura respetando el .data original que usa tu código
+    datosHoja1 = Object.assign({}, rawClients, { data: soloClientesActivos });
+    datosHoja2 = Object.assign({}, rawPlatforms, { data: soloPlataformasActivas });
+
+    // Guardamos en las propiedades SOLO los datos ya filtrados
     guardarEnPropiedades('CACHE_CLIENTES', datosHoja1);
     guardarEnPropiedades('CACHE_PLATFORMS', datosHoja2);
 
     fromCache = false;
-    globalFromCache = false;
-  } else {
-    globalFromCache = true;
   }
 
   return {
-    clients: datosHoja1,
-    platforms: datosHoja2,
+    hoja1: datosHoja1,
+    hoja2: datosHoja2,
     fromCache: fromCache
   };
 }
-
 
 /**
  * Guarda los datos de forma permanente en las Propiedades del Script.
