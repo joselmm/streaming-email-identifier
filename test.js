@@ -972,32 +972,43 @@ function getSheetsDataWithCache(spreadSheetId) {
   }
 
 // 3. Si es necesario actualizar, descargamos de la URL y filtramos con mapeo seguro
-  if (necesitaActualizar) {
+ if (necesitaActualizar) {
     var fetchedData = UrlFetchApp.fetch(LINK_LIBRERIA).getContentText();
     var parsedData = JSON.parse(fetchedData);
 
     var rawClients = parsedData.sheetsData ? parsedData.sheetsData[0] : { data: [] };
     var rawPlatforms = parsedData.sheetsData ? parsedData.sheetsData[1] : { data: [] };
 
-    // --- FILTRAR ACTIVOS Y MAPEAR SOLO LAS PROPIEDADES NECESARIAS DE PLATAFORMAS ---
+    // --- FILTRAR Y MAPEAR PLATAFORMAS CON LAS PROPIEDADES EXACTAS QUE USA EL CÓDIGO ---
     var soloPlataformasActivas = (rawPlatforms.data || []).filter(function(item) {
       return item.active === "1" || item.active === 1 || item.active === true;
     }).map(function(item) {
       return {
-        name: item.name,
-        active: item.active,
-        keyword: item.keyword,
-        url: item.url
+        id: item.id,
+        clientId: item.clientId,             // Vital para el cruce con el cliente
+        email: item.email,                   // Vital para la búsqueda del correo destino
+        active: item.active,                 // Vital para validar el estado activo
+        withCredentials: item.withCredentials, // Vital para validar los permisos de acceso
+        name: item.name,                     // Identificador de la plataforma
+        keyword: item.keyword                // Palabra clave opcional
       };
     });
 
+    // --- FILTRAR CLIENTES ACTIVOS ---
     var soloClientesActivos = (rawClients.data || []).filter(function(item) {
       return item.active === "1" || item.active === 1 || item.active === true;
     });
 
-    // Reconstruimos la estructura respetando el .data original
-    clients = Object.assign({}, rawClients, { data: soloClientesActivos });
-    platforms = Object.assign({}, rawPlatforms, { data: soloPlataformasActivas });
+    // Reconstruimos la estructura respetando el formato requerido .data
+    clients = {
+      sheetId: rawClients.sheetId || "clients",
+      data: soloClientesActivos
+    };
+
+    platforms = {
+      sheetId: rawPlatforms.sheetId || "platforms",
+      data: soloPlataformasActivas
+    };
 
     var nuevoTimestamp = DriveApp.getFileById(spreadSheetId).getLastUpdated().getTime();
 
