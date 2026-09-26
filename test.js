@@ -933,18 +933,44 @@ function setCacheChunked(baseKey, data, expirationInSeconds) {
 }
 
 /**
- * Obtiene los datos usando ScriptProperties, filtrando estrictamente solo los elementos activos.
+ * Obtiene los datos usando ScriptProperties, comparando la última modificación real
+ * del archivo de Google Drive para decidir si actualiza o usa el caché.
+ * Filtra estrictamente solo los elementos activos.
  */
 function getSheetsDataWithCache(spreadSheetId) {
-  var datosHoja1, datosHoja2;
+  var clients, platforms;
   var fromCache = true;
 
-  // 1. Intentamos leer de las propiedades del script
-  datosHoja1 = leerDePropiedades('CACHE_CLIENTES');
-  datosHoja2 = leerDePropiedades('CACHE_PLATFORMS');
+  // 1. Intentamos leer los datos guardados y el timestamp local
+  clients = leerDePropiedades('CACHE_CLIENTES');
+  platforms = leerDePropiedades('CACHE_PLATFORMS');
+  var timestampGuardado = leerDePropiedades('CACHE_TIMESTAMP');
 
-  // 2. Si no están guardadas, las descargamos de la URL
-  if (!datosHoja1 || !datosHoja2) {
+  var necesitaActualizar = false;
+
+  // 2. Si falta alguna estructura o el timestamp, forzamos la actualización
+  if (!clients || !platforms || !timestampGuardado) {
+    necesitaActualizar = true;
+  } else {
+    try {
+      // Obtenemos la fecha de la última modificación real del archivo en Google Drive
+      var archivoDrive = DriveApp.getFileById(spreadSheetId);
+      var ultimaModificacionDrive = archivoDrive.getLastUpdated().getTime();
+
+      // Comparamos: si el archivo de Drive fue modificado después de nuestro último respaldo, actualizamos
+      if (ultimaModificacionDrive > timestampGuardado) {
+        necesitaActualizar = true;
+        console.log("🔄 El archivo de Drive fue modificado. Actualizando caché...");
+      } else {
+        console.log("⚡ Usando datos desde ScriptProperties (sin cambios en Drive).");
+      }
+    } catch (e) {
+      console.error("⚠️ No se pudo verificar la fecha en Drive, usando caché local: " + e.message);
+    }
+  }
+
+  // 3. Si es necesario actualizar, descargamos de la URL y filtramos solo los activos
+  if (necesitaActualizar) {
     var fetchedData = UrlFetchApp.fetch(LINK_LIBRERIA).getContentText();
     var parsedData = JSON.parse(fetchedData);
 
@@ -960,35 +986,26 @@ function getSheetsDataWithCache(spreadSheetId) {
       return item.active === "1" || item.active === 1 || item.active === true;
     });
 
-    // Reconstruimos la estructura respetando el .data original que usa tu código
-    datosHoja1 = Object.assign({}, rawClients, { data: soloClientesActivos });
-    datosHoja2 = Object.assign({}, rawPlatforms, { data: soloPlataformasActivas });
+    // Reconstruimos la estructura respetando el .data original
+    clients = Object.assign({}, rawClients, { data: soloClientesActivos });
+    platforms = Object.assign({}, rawPlatforms, { data: soloPlataformasActivas });
 
-    // Guardamos en las propiedades SOLO los datos ya filtrados
-    guardarEnPropiedades('CACHE_CLIENTES', datosHoja1);
-    guardarEnPropiedades('CACHE_PLATFORMS', datosHoja2);
+    // Obtenemos el nuevo timestamp basado en el archivo de Drive actual
+    var nuevoTimestamp = DriveApp.getFileById(spreadSheetId).getLastUpdated().getTime();
+
+    // Guardamos permanentemente en las propiedades del script
+    guardarEnPropiedades('CACHE_CLIENTES', clients);
+    guardarEnPropiedades('CACHE_PLATFORMS', platforms);
+    guardarEnPropiedades('CACHE_TIMESTAMP', nuevoTimestamp);
 
     fromCache = false;
   }
 
   return {
-    hoja1: datosHoja1,
-    hoja2: datosHoja2,
+    clients: clients,
+    platforms: platforms,
     fromCache: fromCache
   };
-}
-
-/**
- * Guarda los datos de forma permanente en las Propiedades del Script.
- */
-function guardarEnPropiedades(baseKey, data) {
-  try {
-    var scriptProperties = PropertiesService.getScriptProperties();
-    scriptProperties.setProperty(baseKey, JSON.stringify(data));
-    console.log("✅ Propiedad guardada con éxito: " + baseKey);
-  } catch (e) {
-    console.error("❌ Error al guardar propiedad " + baseKey + ": " + e.message);
-  }
 }
 
 /**
