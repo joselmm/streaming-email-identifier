@@ -2,6 +2,13 @@ var theContact = "";
 var regexEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 var globalFromCache = false;
 
+var debugCacheInfo = {
+  status: "INICIALIZADO",
+  chunksExpected: 0,
+  chunksFound: 0,
+  error: null
+};
+
 function verifyVixSignInLink(root, respuesta, subject, context) {
 
   if (subject?.includes("Inicia sesión en tu cuenta de Vix") === false) {
@@ -883,6 +890,7 @@ function main(e) {
     if(context.profileName) response.profileName = context.profileName;
     response.contact = theContact;
     response.fromCache = globalFromCache;
+    response.debugCache = debugCacheInfo; // <-- Tu nuevo parámetro para inspeccionar
 
   } catch (err) {
     console.log("Error en main: " + err.message);
@@ -890,6 +898,7 @@ function main(e) {
     response.message = err.message;
     response.contact = theContact;
     response.fromCache = globalFromCache; // También lo incluimos si hay error
+    response.debugCache = debugCacheInfo; // <-- Tu nuevo parámetro para inspeccionar
   }
 
   return ContentService
@@ -927,32 +936,58 @@ function setCacheChunked(baseKey, data, expirationInSeconds) {
  * Reconstruye y obtiene los datos guardados en CacheService.
  */
 function getCacheChunked(baseKey) {
-  var cache = CacheService.getScriptCache();
-  var metaString = cache.get(baseKey + '_META');
-  
-  if (!metaString) return null; 
-  var meta = JSON.parse(metaString);
-  
-  if (meta.chunks === 1) {
-    var singleChunk = cache.get(baseKey + '_0');
-    return singleChunk ? JSON.parse(singleChunk) : null;
+  try {
+    var cache = CacheService.getScriptCache();
+    var metaKey = baseKey + '_META';
+    var metaData = cache.get(metaKey);
+
+    if (!metaData) {
+      debugCacheInfo.status = "MISS (No existe META en caché)";
+      globalFromCache = false;
+      return null;
+    }
+
+    var meta = JSON.parse(metaData);
+    debugCacheInfo.chunksExpected = meta.chunks;
+    
+    // Armar las llaves a buscar
+    var keysToGet = [metaKey];
+    for (var i = 0; i < meta.chunks; i++) {
+      keysToGet.push(baseKey + '_' + i);
+    }
+
+    var cachedObjects = cache.getAll(keysToGet);
+    
+    // Contar cuántos fragmentos llegaron realmente
+    var foundCount = 0;
+    var fullString = "";
+    
+    for (var j = 0; j < meta.chunks; j++) {
+      var chunkKey = baseKey + '_' + j;
+      if (cachedObjects[chunkKey]) {
+        foundCount++;
+        fullString += cachedObjects[chunkKey];
+      }
+    }
+
+    debugCacheInfo.chunksFound = foundCount;
+
+    if (foundCount !== meta.chunks) {
+      debugCacheInfo.status = "ERROR: Faltan fragmentos en el caché";
+      globalFromCache = false;
+      return null;
+    }
+
+    debugCacheInfo.status = "HIT EXitoso";
+    globalFromCache = true;
+    return JSON.parse(fullString);
+
+  } catch (err) {
+    debugCacheInfo.status = "EXCEPTION";
+    debugCacheInfo.error = err.message;
+    globalFromCache = false;
+    return null;
   }
-  
-  var keys = [];
-  for (var i = 0; i < meta.chunks; i++) {
-    keys.push(baseKey + '_' + i);
-  }
-  
-  var chunksMap = cache.getAll(keys);
-  var fullJson = '';
-  
-  for (var j = 0; j < meta.chunks; j++) {
-    var chunk = chunksMap[baseKey + '_' + j];
-    if (!chunk) return null; 
-    fullJson += chunk;
-  }
-  
-  return JSON.parse(fullJson);
 }
 
 /**
