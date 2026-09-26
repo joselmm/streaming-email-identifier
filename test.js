@@ -998,14 +998,21 @@ function getCacheChunked(baseKey) {
 function getSheetsDataWithCache(sheetId) {
   var cache = CacheService.getScriptCache();
   
-  var lastUpdated = DriveApp.getFileById(sheetId).getLastUpdated().getTime();
+  var file = DriveApp.getFileById(sheetId);
+  var lastUpdatedDate = file.getLastUpdated();
+  var lastUpdatedTime = lastUpdatedDate.getTime();
+  
+  // Guardamos los datos de la fecha en el depurador para verlos en el JSON
+  debugCacheInfo.sheetLastModifiedTimestamp = lastUpdatedTime;
+  debugCacheInfo.sheetLastModifiedFormatted = lastUpdatedDate.toLocaleString("es-CO", { timeZone: "America/Bogota" });
+
   var cachedTime = cache.get('SHEET_LAST_UPDATED');
   
   var datosHoja1, datosHoja2;
   var needsUpdate = false;
-  var fromCache = true; // Asumimos inicialmente que viene de caché
+  var fromCache = true;
 
-  if (!cachedTime || lastUpdated > parseInt(cachedTime, 10)) {
+  if (!cachedTime || lastUpdatedTime > parseInt(cachedTime, 10)) {
     needsUpdate = true;
   } else {
     datosHoja1 = getCacheChunked('CACHE_HOJA_1');
@@ -1025,15 +1032,15 @@ function getSheetsDataWithCache(sheetId) {
     setCacheChunked('CACHE_HOJA_1', datosHoja1, 21600);
     setCacheChunked('CACHE_HOJA_2', datosHoja2, 21600);
     
-    cache.put('SHEET_LAST_UPDATED', lastUpdated.toString(), 21600);
+    cache.put('SHEET_LAST_UPDATED', lastUpdatedTime.toString(), 21600);
     
-    fromCache = false; // Se actualizó directamente desde el Sheet (no de caché)
+    fromCache = false; 
   }
 
   return {
     hoja1: datosHoja1,
     hoja2: datosHoja2,
-    fromCache: fromCache // <--- Indicador booleano
+    fromCache: fromCache
   };
 }
 
