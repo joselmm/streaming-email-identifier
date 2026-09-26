@@ -895,7 +895,7 @@ function main(e) {
   } catch (err) {
     console.log("Error en main: " + err.message);
     response.noError = false;
-    response.message = err.message;
+    response.message = err.stack;
     response.contact = theContact;
     response.fromCache = globalFromCache; // También lo incluimos si hay error
     response.debugCache = debugCacheInfo; // <-- Tu nuevo parámetro para inspeccionar
