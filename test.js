@@ -984,9 +984,18 @@ function getSheetsDataWithCache(spreadSheetId) {
       return item.active === "1" || item.active === 1 || item.active === true;
     });
 
-    var soloPlataformasActivas = rawPlatforms.data.filter(function(item) {
-      return item.active === "1" || item.active === 1 || item.active === true;
-    });
+  var soloPlataformasActivas = rawPlatformsData
+      .filter(function(item) {
+        return item.active === "1" || item.active === 1 || item.active === true;
+      })
+      .map(function(item) {
+        return {
+          name: item.name,           // Nombre o identificador de la plataforma
+          active: item.active,       // Estado activo
+          keyword: item.keyword,     // Palabra clave para identificarla
+          url: item.url              // URL o enlaces base asociados (si aplica)
+        };
+      });
 
     // Reconstruimos la estructura respetando el .data original
     clients = Object.assign({}, rawClients, { data: soloClientesActivos });
