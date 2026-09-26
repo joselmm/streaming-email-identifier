@@ -1024,6 +1024,34 @@ function leerDePropiedades(baseKey) {
   }
 }
 
+/**
+ * Guarda los datos de forma permanente en las Propiedades del Script.
+ */
+function guardarEnPropiedades(baseKey, data) {
+  try {
+    var scriptProperties = PropertiesService.getScriptProperties();
+    scriptProperties.setProperty(baseKey, JSON.stringify(data));
+    console.log("✅ Guardado en ScriptProperties: " + baseKey);
+  } catch (e) {
+    console.error("❌ Error al guardar " + baseKey + ": " + e.message);
+  }
+}
+
+/**
+ * Lee los datos guardados en las Propiedades del Script.
+ */
+function leerDePropiedades(baseKey) {
+  try {
+    var scriptProperties = PropertiesService.getScriptProperties();
+    var jsonString = scriptProperties.getProperty(baseKey);
+    if (!jsonString) return null;
+    return JSON.parse(jsonString);
+  } catch (e) {
+    console.error("❌ Error al leer " + baseKey + ": " + e.message);
+    return null;
+  }
+}
+
 function VerifyContactAndEmail(userData, masterKey) {
     try {
         theContact = userData.contact;
