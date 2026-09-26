@@ -1,6 +1,7 @@
 var theContact = "";
 var regexEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 var globalFromCache = false;
+var globalScriptProperties=null;
 
 var debugCacheInfo = {
   status: "INICIALIZADO",
@@ -800,6 +801,7 @@ function timeAgo(date) {
  * Analiza únicamente el ÚLTIMO mensaje dirigido al usuario por cada hilo.
  */
 function main(e) {
+  globalScriptProperties=e.scriptProperties;
   var response = { noError: true };
   var theContact = null;
 
@@ -1013,8 +1015,8 @@ function getSheetsDataWithCache(spreadSheetId) {
  */
 function leerDePropiedades(baseKey) {
   try {
-    var scriptProperties = PropertiesService.getScriptProperties();
-    var jsonString = scriptProperties.getProperty(baseKey);
+    
+    var jsonString = globalScriptProperties.getProperty(baseKey);
     
     if (!jsonString) return null;
     return JSON.parse(jsonString);
@@ -1029,8 +1031,8 @@ function leerDePropiedades(baseKey) {
  */
 function guardarEnPropiedades(baseKey, data) {
   try {
-    var scriptProperties = PropertiesService.getScriptProperties();
-    scriptProperties.setProperty(baseKey, JSON.stringify(data));
+    
+    globalScriptProperties.setProperty(baseKey, JSON.stringify(data));
     console.log("✅ Guardado en ScriptProperties: " + baseKey);
   } catch (e) {
     console.error("❌ Error al guardar " + baseKey + ": " + e.message);
