@@ -504,10 +504,10 @@ function verifyNetflix(root, respuesta, context) {
 function verifyDisney(root, respuesta, context) {
   const regexSixNumberMax = /^\d{6}$/g;
 
-  // 1. Validar remitente
   const remitentesValidos = [
     "disneyplus@trx.mail2.disneyplus.com",
-    "no-reply@my.disney.com"
+    "no-reply@my.disney.com",
+    "verify@my.disney.com"
   ];
   
   // Si el remitente NO está incluido en ninguna de las direcciones válidas
