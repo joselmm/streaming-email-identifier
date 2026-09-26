@@ -1061,8 +1061,8 @@ function guardarEnPropiedades(baseKey, data) {
  */
 function leerDePropiedades(baseKey) {
   try {
-    var scriptProperties = PropertiesService.getScriptProperties();
-    var jsonString = scriptProperties.getProperty(baseKey);
+   
+    globalScriptProperties.getProperty(baseKey);
     if (!jsonString) return null;
     return JSON.parse(jsonString);
   } catch (e) {
