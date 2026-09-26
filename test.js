@@ -995,51 +995,49 @@ function getCacheChunked(baseKey) {
  * @param {string} sheetId El ID del documento de Google Sheets.
  * @return {Object} Objeto con los datos de las dos hojas.
  */
-function getSheetsDataWithCache(sheetId) {
+function getSheetsDataWithCache() {
   var cache = CacheService.getScriptCache();
   
-  var file = DriveApp.getFileById(sheetId);
-  var lastUpdatedDate = file.getLastUpdated();
-  var lastUpdatedTime = lastUpdatedDate.getTime();
-  
-  // Guardamos los datos de la fecha en el depurador para verlos en el JSON
-  debugCacheInfo.sheetLastModifiedTimestamp = lastUpdatedTime;
-  debugCacheInfo.sheetLastModifiedFormatted = lastUpdatedDate.toLocaleString("es-CO", { timeZone: "America/Bogota" });
-
-  var cachedTime = cache.get('SHEET_LAST_UPDATED');
-  
+  // Puedes usar una marca de tiempo estática o un identificador si tu librería no te da la fecha de Drive
+  // Si deseas comprobar si cambió, puedes guardar el hash o la fecha de la última petición exitosa
   var datosHoja1, datosHoja2;
   var needsUpdate = false;
   var fromCache = true;
 
-  if (!cachedTime || lastUpdatedTime > parseInt(cachedTime, 10)) {
-    needsUpdate = true;
-  } else {
-    datosHoja1 = getCacheChunked('CACHE_HOJA_1');
-    datosHoja2 = getCacheChunked('CACHE_HOJA_2');
-    
-    if (!datosHoja1 || !datosHoja2) {
-      needsUpdate = true; 
-    }
+  // Intentamos leer de los chunks en caché
+  datosHoja1 = getCacheChunked('CACHE_CLIENTES'); // o CACHE_HOJA_1
+  datosHoja2 = getCacheChunked('CACHE_PLATFORMS'); // o CACHE_HOJA_2
+  
+  if (!datosHoja1 || !datosHoja2) {
+    needsUpdate = true; 
   }
 
   if (needsUpdate) {
-    var ss = SpreadsheetApp.openById(sheetId);
+    debugCacheInfo.status = "ACTUALIZANDO_DESDE_URL";
     
-    datosHoja1 = ss.getSheetByName('Hoja1').getDataRange().getValues();
-    datosHoja2 = ss.getSheetByName('Hoja2').getDataRange().getValues();
+    // Tu forma correcta de consumir los datos vía URL
+    var fetchedData = UrlFetchApp.fetch(LINK_LIBRERIA).getContentText();
+    var parsedData = JSON.parse(fetchedData);
+    
+    // Asigna según como venga estructurado en tu JSON
+    var clients = parsedData.sheetsData ? parsedData.sheetsData[0] : parsedData.clients;
+    var platforms = parsedData.sheetsData ? parsedData.sheetsData[1] : parsedData.platforms;
 
-    setCacheChunked('CACHE_HOJA_1', datosHoja1, 21600);
-    setCacheChunked('CACHE_HOJA_2', datosHoja2, 21600);
+    // Guardamos en chunks
+    setCacheChunked('CACHE_CLIENTES', clients, 21600);
+    setCacheChunked('CACHE_PLATFORMS', platforms, 21600);
     
-    cache.put('SHEET_LAST_UPDATED', lastUpdatedTime.toString(), 21600);
-    
+    datosHoja1 = clients;
+    datosHoja2 = platforms;
     fromCache = false; 
+    globalFromCache = false;
+  } else {
+    globalFromCache = true;
   }
 
   return {
-    hoja1: datosHoja1,
-    hoja2: datosHoja2,
+    clients: datosHoja1,
+    platforms: datosHoja2,
     fromCache: fromCache
   };
 }
