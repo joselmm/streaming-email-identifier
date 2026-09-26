@@ -1010,7 +1010,7 @@ function getSheetsDataWithCache(spreadSheetId) {
       data: soloPlataformasActivas
     };
 
-    var nuevoTimestamp = DriveApp.getFileById(spreadSheetId).getLastUpdated().getTime();
+    var nuevoTimestamp = Date.now();
 
     // Guardamos en las propiedades del script de forma permanente
     guardarEnPropiedades('CACHE_CLIENTES', clients);
