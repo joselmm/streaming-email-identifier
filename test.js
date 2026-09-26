@@ -933,103 +933,40 @@ function setCacheChunked(baseKey, data, expirationInSeconds) {
 }
 
 /**
- * Reconstruye y obtiene los datos guardados en CacheService.
- */
-function getCacheChunked(baseKey) {
-  try {
-    var cache = CacheService.getScriptCache();
-    var metaKey = baseKey + '_META';
-    var metaData = cache.get(metaKey);
-
-    if (!metaData) {
-      debugCacheInfo.status = "MISS (No existe META en caché)";
-      globalFromCache = false;
-      return null;
-    }
-
-    var meta = JSON.parse(metaData);
-    debugCacheInfo.chunksExpected = meta.chunks;
-    
-    // Armar las llaves a buscar
-    var keysToGet = [metaKey];
-    for (var i = 0; i < meta.chunks; i++) {
-      keysToGet.push(baseKey + '_' + i);
-    }
-
-    var cachedObjects = cache.getAll(keysToGet);
-    
-    // Contar cuántos fragmentos llegaron realmente
-    var foundCount = 0;
-    var fullString = "";
-    
-    for (var j = 0; j < meta.chunks; j++) {
-      var chunkKey = baseKey + '_' + j;
-      if (cachedObjects[chunkKey]) {
-        foundCount++;
-        fullString += cachedObjects[chunkKey];
-      }
-    }
-
-    debugCacheInfo.chunksFound = foundCount;
-
-    if (foundCount !== meta.chunks) {
-      debugCacheInfo.status = "ERROR: Faltan fragmentos en el caché";
-      globalFromCache = false;
-      return null;
-    }
-
-    debugCacheInfo.status = "HIT EXitoso";
-    globalFromCache = true;
-    return JSON.parse(fullString);
-
-  } catch (err) {
-    debugCacheInfo.status = "EXCEPTION";
-    debugCacheInfo.error = err.stack;
-    globalFromCache = false;
-    return null;
-  }
-}
-
-/**
- * Obtiene los datos del Sheet usando CacheService con validación de última modificación.
- * @param {string} sheetId El ID del documento de Google Sheets.
- * @return {Object} Objeto con los datos de las dos hojas.
+ * Obtiene los datos usando ScriptProperties, filtrando estrictamente solo los elementos activos.
  */
 function getSheetsDataWithCache() {
-  var cache = CacheService.getScriptCache();
-  
-  // Puedes usar una marca de tiempo estática o un identificador si tu librería no te da la fecha de Drive
-  // Si deseas comprobar si cambió, puedes guardar el hash o la fecha de la última petición exitosa
   var datosHoja1, datosHoja2;
-  var needsUpdate = false;
   var fromCache = true;
 
-  // Intentamos leer de los chunks en caché
-  datosHoja1 = getCacheChunked('CACHE_CLIENTES'); // o CACHE_HOJA_1
-  datosHoja2 = getCacheChunked('CACHE_PLATFORMS'); // o CACHE_HOJA_2
-  
-  if (!datosHoja1 || !datosHoja2) {
-    needsUpdate = true; 
-  }
+  // Intentamos leer de las propiedades del script
+  datosHoja1 = leerDePropiedades('CACHE_CLIENTES');
+  datosHoja2 = leerDePropiedades('CACHE_PLATFORMS');
 
-  if (needsUpdate) {
-    debugCacheInfo.status = "ACTUALIZANDO_DESDE_URL";
+  if (!datosHoja1 || !datosHoja2) {
+    debugCacheInfo.status = "ACTUALIZADO_DESDE_URL";
     
-    // Tu forma correcta de consumir los datos vía URL
+    // Petición HTTP normal a tu librería
     var fetchedData = UrlFetchApp.fetch(LINK_LIBRERIA).getContentText();
     var parsedData = JSON.parse(fetchedData);
-    
-    // Asigna según como venga estructurado en tu JSON
-    var clients = parsedData.sheetsData ? parsedData.sheetsData[0] : parsedData.clients;
-    var platforms = parsedData.sheetsData ? parsedData.sheetsData[1] : parsedData.platforms;
 
-    // Guardamos en chunks
-    setCacheChunked('CACHE_CLIENTES', clients, 21600);
-    setCacheChunked('CACHE_PLATFORMS', platforms, 21600);
-    
-    datosHoja1 = clients;
-    datosHoja2 = platforms;
-    fromCache = false; 
+    var rawClients = parsedData.sheetsData ? parsedData.sheetsData[0].data : (parsedData.clients || []);
+    var rawPlatforms = parsedData.sheetsData ? parsedData.sheetsData[1].data : (parsedData.platforms || []);
+
+    // Filtramos para conservar ESTRICTAMENTE lo que esté activo en ambos
+    datosHoja1 = rawClients.filter(function(item) {
+      return item.active == 1 || item.active === true || item.active === "active";
+    });
+
+    datosHoja2 = rawPlatforms.filter(function(item) {
+      return item.active == 1 || item.active === true || item.active === "active";
+    });
+
+    // Guardamos permanentemente en las propiedades del script ya filtrado
+    guardarEnPropiedades('CACHE_CLIENTES', datosHoja1);
+    guardarEnPropiedades('CACHE_PLATFORMS', datosHoja2);
+
+    fromCache = false;
     globalFromCache = false;
   } else {
     globalFromCache = true;
@@ -1040,6 +977,36 @@ function getSheetsDataWithCache() {
     platforms: datosHoja2,
     fromCache: fromCache
   };
+}
+
+
+/**
+ * Guarda los datos de forma permanente en las Propiedades del Script.
+ */
+function guardarEnPropiedades(baseKey, data) {
+  try {
+    var scriptProperties = PropertiesService.getScriptProperties();
+    scriptProperties.setProperty(baseKey, JSON.stringify(data));
+    console.log("✅ Propiedad guardada con éxito: " + baseKey);
+  } catch (e) {
+    console.error("❌ Error al guardar propiedad " + baseKey + ": " + e.message);
+  }
+}
+
+/**
+ * Lee los datos guardados en las Propiedades del Script.
+ */
+function leerDePropiedades(baseKey) {
+  try {
+    var scriptProperties = PropertiesService.getScriptProperties();
+    var jsonString = scriptProperties.getProperty(baseKey);
+    
+    if (!jsonString) return null;
+    return JSON.parse(jsonString);
+  } catch (e) {
+    console.error("❌ Error al leer propiedad " + baseKey + ": " + e.message);
+    return null;
+  }
 }
 
 function VerifyContactAndEmail(userData, masterKey) {
