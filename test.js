@@ -984,7 +984,7 @@ function getCacheChunked(baseKey) {
 
   } catch (err) {
     debugCacheInfo.status = "EXCEPTION";
-    debugCacheInfo.error = err.message;
+    debugCacheInfo.error = err.stack;
     globalFromCache = false;
     return null;
   }
@@ -1138,6 +1138,6 @@ function VerifyContactAndEmail(userData, masterKey) {
 
     } catch (err) {
         console.log("Error en Verificación: " + err.message);
-        return err.message;
+        return err.stack;
     }
 }
