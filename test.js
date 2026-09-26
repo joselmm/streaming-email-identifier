@@ -1,5 +1,6 @@
 var theContact = "";
 var regexEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+var globalFromCache = false;
 
 function verifyVixSignInLink(root, respuesta, subject, context) {
 
@@ -881,17 +882,124 @@ function main(e) {
     
     if(context.profileName) response.profileName = context.profileName;
     response.contact = theContact;
+    response.fromCache = globalFromCache;
 
   } catch (err) {
     console.log("Error en main: " + err.message);
     response.noError = false;
     response.message = err.message;
     response.contact = theContact;
+    response.fromCache = globalFromCache; // También lo incluimos si hay error
   }
 
   return ContentService
     .createTextOutput(JSON.stringify(response))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Guarda un objeto o array en CacheService dividiéndolo en fragmentos si es muy grande.
+ */
+function setCacheChunked(baseKey, data, expirationInSeconds) {
+  var cache = CacheService.getScriptCache();
+  var jsonString = JSON.stringify(data);
+  var CHUNK_SIZE = 90000; 
+  
+  if (jsonString.length <= CHUNK_SIZE) {
+    cache.put(baseKey + '_META', JSON.stringify({ chunks: 1 }), expirationInSeconds);
+    cache.put(baseKey + '_0', jsonString, expirationInSeconds);
+    return;
+  }
+  
+  var totalChunks = Math.ceil(jsonString.length / CHUNK_SIZE);
+  var cacheObject = {};
+  cacheObject[baseKey + '_META'] = JSON.stringify({ chunks: totalChunks });
+  
+  for (var i = 0; i < totalChunks; i++) {
+    var start = i * CHUNK_SIZE;
+    cacheObject[baseKey + '_' + i] = jsonString.substring(start, start + CHUNK_SIZE);
+  }
+  
+  cache.putAll(cacheObject, expirationInSeconds);
+}
+
+/**
+ * Reconstruye y obtiene los datos guardados en CacheService.
+ */
+function getCacheChunked(baseKey) {
+  var cache = CacheService.getScriptCache();
+  var metaString = cache.get(baseKey + '_META');
+  
+  if (!metaString) return null; 
+  var meta = JSON.parse(metaString);
+  
+  if (meta.chunks === 1) {
+    var singleChunk = cache.get(baseKey + '_0');
+    return singleChunk ? JSON.parse(singleChunk) : null;
+  }
+  
+  var keys = [];
+  for (var i = 0; i < meta.chunks; i++) {
+    keys.push(baseKey + '_' + i);
+  }
+  
+  var chunksMap = cache.getAll(keys);
+  var fullJson = '';
+  
+  for (var j = 0; j < meta.chunks; j++) {
+    var chunk = chunksMap[baseKey + '_' + j];
+    if (!chunk) return null; 
+    fullJson += chunk;
+  }
+  
+  return JSON.parse(fullJson);
+}
+
+/**
+ * Obtiene los datos del Sheet usando CacheService con validación de última modificación.
+ * @param {string} sheetId El ID del documento de Google Sheets.
+ * @return {Object} Objeto con los datos de las dos hojas.
+ */
+function getSheetsDataWithCache(sheetId) {
+  var cache = CacheService.getScriptCache();
+  
+  var lastUpdated = DriveApp.getFileById(sheetId).getLastUpdated().getTime();
+  var cachedTime = cache.get('SHEET_LAST_UPDATED');
+  
+  var datosHoja1, datosHoja2;
+  var needsUpdate = false;
+  var fromCache = true; // Asumimos inicialmente que viene de caché
+
+  if (!cachedTime || lastUpdated > parseInt(cachedTime, 10)) {
+    needsUpdate = true;
+  } else {
+    datosHoja1 = getCacheChunked('CACHE_HOJA_1');
+    datosHoja2 = getCacheChunked('CACHE_HOJA_2');
+    
+    if (!datosHoja1 || !datosHoja2) {
+      needsUpdate = true; 
+    }
+  }
+
+  if (needsUpdate) {
+    var ss = SpreadsheetApp.openById(sheetId);
+    
+    datosHoja1 = ss.getSheetByName('Hoja1').getDataRange().getValues();
+    datosHoja2 = ss.getSheetByName('Hoja2').getDataRange().getValues();
+
+    setCacheChunked('CACHE_HOJA_1', datosHoja1, 21600);
+    setCacheChunked('CACHE_HOJA_2', datosHoja2, 21600);
+    
+    cache.put('SHEET_LAST_UPDATED', lastUpdated.toString(), 21600);
+    
+    fromCache = false; // Se actualizó directamente desde el Sheet (no de caché)
+  }
+
+  return {
+    hoja1: datosHoja1,
+    hoja2: datosHoja2,
+    fromCache: fromCache // <--- Indicador booleano
+  };
 }
 
 function VerifyContactAndEmail(userData, masterKey) {
@@ -905,11 +1013,25 @@ function VerifyContactAndEmail(userData, masterKey) {
             return true;
         }
 
-        // --- CARGA DE DATOS DESDE SHEETS ---
-        var fetchedData = UrlFetchApp.fetch(LINK_LIBRERIA).getContentText();
-        var [clients, platforms] = JSON.parse(fetchedData).sheetsData;
-        var targetEmail = userData.emailToCheck.toLowerCase();
+        // --- EXTRACCIÓN DEL SPREADSHEET ID DESDE LINK_LIBRERIA ---
+        // Extrae lo que está después de "spreadSheetId=" y antes del siguiente "&" o final de cadena
+        var matchId = LINK_LIBRERIA.match(/spreadSheetId=([^&]+)/);
+        var spreadSheetId = matchId ? matchId[1] : null;
 
+        if (!spreadSheetId) {
+            throw new Error("No se pudo extraer el spreadSheetId de LINK_LIBRERIA.");
+        }
+
+        // --- CARGA DE DATOS DESDE SHEETS USANDO TU CACHÉ ---
+        var cachedData = getSheetsDataWithCache(spreadSheetId);
+        
+        var clients = cachedData.hoja1;
+        var platforms = cachedData.hoja2;
+        
+        // Guardamos si se usó caché o no de forma global para usarlo luego en la respuesta
+        globalFromCache = cachedData.fromCache;
+        
+        var targetEmail = userData.emailToCheck.toLowerCase();
         // ---------------------------------------------------------
         // LÓGICA NUEVA: Solo si viene la variable 'wa'
         // ---------------------------------------------------------
