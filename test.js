@@ -1056,20 +1056,6 @@ function guardarEnPropiedades(baseKey, data) {
   }
 }
 
-/**
- * Lee los datos guardados en las Propiedades del Script.
- */
-function leerDePropiedades(baseKey) {
-  try {
-   
-    globalScriptProperties.getProperty(baseKey);
-    if (!jsonString) return null;
-    return JSON.parse(jsonString);
-  } catch (e) {
-    console.error("❌ Error al leer " + baseKey + ": " + e.message);
-    return null;
-  }
-}
 
 function VerifyContactAndEmail(userData, masterKey) {
     try {
