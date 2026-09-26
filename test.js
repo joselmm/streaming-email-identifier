@@ -971,7 +971,7 @@ function getSheetsDataWithCache(spreadSheetId) {
     }
   }
 
-  // 3. Si es necesario actualizar, descargamos de la URL y filtramos solo los activos
+// 3. Si es necesario actualizar, descargamos de la URL y filtramos con mapeo seguro
   if (necesitaActualizar) {
     var fetchedData = UrlFetchApp.fetch(LINK_LIBRERIA).getContentText();
     var parsedData = JSON.parse(fetchedData);
@@ -979,32 +979,29 @@ function getSheetsDataWithCache(spreadSheetId) {
     var rawClients = parsedData.sheetsData ? parsedData.sheetsData[0] : { data: [] };
     var rawPlatforms = parsedData.sheetsData ? parsedData.sheetsData[1] : { data: [] };
 
-    // --- FILTRAR ESTRICTAMENTE SOLO LOS ACTIVOS ANTES DE GUARDAR ---
-    var soloClientesActivos = rawClients.data.filter(function(item) {
+    // --- FILTRAR ACTIVOS Y MAPEAR SOLO LAS PROPIEDADES NECESARIAS DE PLATAFORMAS ---
+    var soloPlataformasActivas = (rawPlatforms.data || []).filter(function(item) {
       return item.active === "1" || item.active === 1 || item.active === true;
+    }).map(function(item) {
+      return {
+        name: item.name,
+        active: item.active,
+        keyword: item.keyword,
+        url: item.url
+      };
     });
 
-  var soloPlataformasActivas = rawPlatformsData
-      .filter(function(item) {
-        return item.active === "1" || item.active === 1 || item.active === true;
-      })
-      .map(function(item) {
-        return {
-          name: item.name,           // Nombre o identificador de la plataforma
-          active: item.active,       // Estado activo
-          keyword: item.keyword,     // Palabra clave para identificarla
-          url: item.url              // URL o enlaces base asociados (si aplica)
-        };
-      });
+    var soloClientesActivos = (rawClients.data || []).filter(function(item) {
+      return item.active === "1" || item.active === 1 || item.active === true;
+    });
 
     // Reconstruimos la estructura respetando el .data original
     clients = Object.assign({}, rawClients, { data: soloClientesActivos });
     platforms = Object.assign({}, rawPlatforms, { data: soloPlataformasActivas });
 
-    // Obtenemos el nuevo timestamp basado en el archivo de Drive actual
     var nuevoTimestamp = DriveApp.getFileById(spreadSheetId).getLastUpdated().getTime();
 
-    // Guardamos permanentemente en las propiedades del script
+    // Guardamos en las propiedades del script de forma permanente
     guardarEnPropiedades('CACHE_CLIENTES', clients);
     guardarEnPropiedades('CACHE_PLATFORMS', platforms);
     guardarEnPropiedades('CACHE_TIMESTAMP', nuevoTimestamp);
