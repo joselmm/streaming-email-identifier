@@ -501,15 +501,14 @@ function verifyNetflix(root, respuesta, context) {
 
 }
 
-function verifyDisney(root, respuesta, context) {
+function verifyDisney(root, respuesta, subject, context) {
   const regexSixNumberMax = /^\d{6}$/g;
-
   const remitentesValidos = [
     "disneyplus@trx.mail2.disneyplus.com",
     "no-reply@my.disney.com",
     "verify@my.disney.com"
   ];
-  
+
   // Si el remitente NO está incluido en ninguna de las direcciones válidas
   if (!remitentesValidos.some(email => context?.from?.includes(email))) {
     return respuesta;
@@ -539,14 +538,14 @@ function verifyDisney(root, respuesta, context) {
     //const isLabelCodigo = labelText === "Tu código de acceso único para Disney+";
 
     if (code?.match(regexSixNumberMax)) {
-      context.sendJustIf="{enviar_codigos_disney}"
+      context.sendJustIf = "{enviar_codigos_disney}"
       context.keyword = "disney";
       console.log("Es de código de acceso único para Disney+");
-    
+
       respuesta.noError = true;
       respuesta.code = code;
       respuesta.about = "Código de acceso único Disney Plus (Válido por 15 min)";
-    
+
       return respuesta;
     }
   }
@@ -554,6 +553,7 @@ function verifyDisney(root, respuesta, context) {
   console.log("No es de Disney+");
   return respuesta;
 }
+
 
 
 
@@ -659,7 +659,7 @@ function extractCode(htmlText, subject, context={}) {
     };
 
     // VERIFICACIONES
-    verifyDisney(root, respuesta, context);
+    verifyAmazon(root, respuesta, subject, context);
     if (respuesta.noError) return finalizar(respuesta);
 
     verifyAmazon(root, respuesta, subject, context);
