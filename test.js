@@ -1,6 +1,7 @@
 var theContact = "";
 var regexEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 var globalScriptProperties=null;
+var globalFromCache = {};
 
 
 var debugCacheInfo = {
@@ -947,7 +948,7 @@ var tsNumber = Number(timestampGuardado);
       console.error("⚠️ No se pudo verificar la fecha en Drive, usando caché local: " + e.message);
     }
   }
-
+necesitaActualizar=true;
 // 3. Si es necesario actualizar, descargamos de la URL y filtramos con mapeo seguro
  if (necesitaActualizar) {
     var fetchedData = UrlFetchApp.fetch(LINK_LIBRERIA).getContentText();
