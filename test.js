@@ -957,9 +957,14 @@ function getSheetsDataWithCache(spreadSheetId) {
     try {
       // Obtenemos la fecha de la última modificación real del archivo en Google Drive
       
-
+      var tsNumber = Number(timestampGuardado);
       // Comparamos: si el archivo de Drive fue modificado después de nuestro último respaldo, actualizamos
-      if (DriveApp.getFileById(spreadSheetId).getLastUpdated().getTime() > Number(timestampGuardado)) {
+      var ultimaModificacion = DriveApp.getFileById(spreadSheetId).getLastUpdated().getTime();
+      globalFromCache.ultimaModificacion=ultimaModificacion;
+            globalFromCache.tsNumber=tsNumber;
+
+      
+      if (ultimaModificacion > tsNumber) {
         fromCache = false;
         necesitaActualizar = true;
         console.log("🔄 El archivo de Drive fue modificado. Actualizando caché...");
