@@ -991,9 +991,9 @@ necesitaActualizar=true;
     var nuevoTimestamp = Date.now();
 
     // Guardamos en las propiedades del script de forma permanente
-    guardarEnPropiedades('CACHE_CLIENTES', clients);
+   /* guardarEnPropiedades('CACHE_CLIENTES', clients);
     guardarEnPropiedades('CACHE_PLATFORMS', platforms);
-    guardarEnPropiedades('CACHE_TIMESTAMP', nuevoTimestamp);
+    guardarEnPropiedades('CACHE_TIMESTAMP', nuevoTimestamp);*/
 
   }
 
