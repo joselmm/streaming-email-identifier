@@ -925,9 +925,9 @@ function getSheetsDataWithCache(spreadSheetId) {
 var tsNumber = Number(timestampGuardado);
       // Comparamos: si el archivo de Drive fue modificado después de nuestro último respaldo, actualizamos
       var ultimaModificacion = DriveApp.getFileById(spreadSheetId).getLastUpdated().getTime();
-      globalFromCache.ultimaModificacion=ultimaModificacion;
-      globalFromCache.tsNumber=tsNumber;
-  var necesitaActualizar = false;
+      debugCacheInfo.ultimaModificacion=ultimaModificacion;
+      debugCacheInfo.tsNumber=tsNumber;
+      var necesitaActualizar = false;
 
   // 2. Si falta alguna estructura o el timestamp, forzamos la actualización
   if (!clients || !platforms || !timestampGuardado) {
