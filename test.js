@@ -909,32 +909,6 @@ function main(e) {
 }
 
 /**
- * Guarda un objeto o array en CacheService dividiéndolo en fragmentos si es muy grande.
- */
-function setCacheChunked(baseKey, data, expirationInSeconds) {
-  var cache = CacheService.getScriptCache();
-  var jsonString = JSON.stringify(data);
-  var CHUNK_SIZE = 90000; 
-  
-  if (jsonString.length <= CHUNK_SIZE) {
-    cache.put(baseKey + '_META', JSON.stringify({ chunks: 1 }), expirationInSeconds);
-    cache.put(baseKey + '_0', jsonString, expirationInSeconds);
-    return;
-  }
-  
-  var totalChunks = Math.ceil(jsonString.length / CHUNK_SIZE);
-  var cacheObject = {};
-  cacheObject[baseKey + '_META'] = JSON.stringify({ chunks: totalChunks });
-  
-  for (var i = 0; i < totalChunks; i++) {
-    var start = i * CHUNK_SIZE;
-    cacheObject[baseKey + '_' + i] = jsonString.substring(start, start + CHUNK_SIZE);
-  }
-  
-  cache.putAll(cacheObject, expirationInSeconds);
-}
-
-/**
  * Obtiene los datos usando ScriptProperties, comparando la última modificación real
  * del archivo de Google Drive para decidir si actualiza o usa el caché.
  * Filtra estrictamente solo los elementos activos.
