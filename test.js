@@ -898,7 +898,7 @@ function main(e) {
   } catch (err) {
     console.log("Error en main: " + err.message);
     response.noError = false;
-    response.message = err.stack;
+    response.message = err.message;
     response.contact = theContact;
     response.fromCache = globalFromCache; // También lo incluimos si hay error
     response.debugCache = debugCacheInfo; // <-- Tu nuevo parámetro para inspeccionar
@@ -1130,6 +1130,6 @@ function VerifyContactAndEmail(userData, masterKey) {
 
     } catch (err) {
         console.log("Error en Verificación: " + err.message);
-        return err.stack;
+        return err.message;
     }
 }
