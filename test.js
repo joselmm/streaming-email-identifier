@@ -921,7 +921,11 @@ function getSheetsDataWithCache(spreadSheetId) {
   clients = leerDePropiedades('CACHE_CLIENTES');
   platforms = leerDePropiedades('CACHE_PLATFORMS');
   var timestampGuardado = leerDePropiedades('CACHE_TIMESTAMP');
-
+var tsNumber = Number(timestampGuardado);
+      // Comparamos: si el archivo de Drive fue modificado después de nuestro último respaldo, actualizamos
+      var ultimaModificacion = DriveApp.getFileById(spreadSheetId).getLastUpdated().getTime();
+      globalFromCache.ultimaModificacion=ultimaModificacion;
+      globalFromCache.tsNumber=tsNumber;
   var necesitaActualizar = false;
 
   // 2. Si falta alguna estructura o el timestamp, forzamos la actualización
@@ -929,14 +933,7 @@ function getSheetsDataWithCache(spreadSheetId) {
     necesitaActualizar = true;
   } else {
     try {
-      // Obtenemos la fecha de la última modificación real del archivo en Google Drive
-      
-      var tsNumber = Number(timestampGuardado);
-      // Comparamos: si el archivo de Drive fue modificado después de nuestro último respaldo, actualizamos
-      var ultimaModificacion = DriveApp.getFileById(spreadSheetId).getLastUpdated().getTime();
-      globalFromCache.ultimaModificacion=ultimaModificacion;
-            globalFromCache.tsNumber=tsNumber;
-
+   
       
       if (ultimaModificacion > tsNumber) {
         fromCache = false;
