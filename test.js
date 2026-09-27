@@ -955,12 +955,12 @@ function getSheetsDataWithCache(spreadSheetId) {
 	var ultimaModificacion = DriveApp.getFileById(spreadSheetId).getLastUpdated().getTime();
 
 
-	debugCacheInfo.backUp = {
+	/*debugCacheInfo.backUp = {
 		clients,
 		platforms,
 		timestampGuardado,
 		tsNumber
-	}
+	}*/
 	var necesitaActualizar = false;
 
 	// 2. Si falta alguna estructura o el timestamp, forzamos la actualización
