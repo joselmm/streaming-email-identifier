@@ -927,6 +927,7 @@ var tsNumber = Number(timestampGuardado);
       var ultimaModificacion = DriveApp.getFileById(spreadSheetId).getLastUpdated().getTime();
       debugCacheInfo.ultimaModificacion=ultimaModificacion;
       debugCacheInfo.tsNumber=tsNumber;
+      debugCacheInfo.backUp={clients,platforms,timestampGuardado}
       var necesitaActualizar = false;
 
   // 2. Si falta alguna estructura o el timestamp, forzamos la actualización
