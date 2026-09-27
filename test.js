@@ -1,6 +1,7 @@
 var theContact = "";
 var regexEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 var globalScriptProperties=null;
+var globalFromCache = {};
 
 var debugCacheInfo = {
   status: "INICIALIZADO",
