@@ -937,12 +937,13 @@ var tsNumber = Number(timestampGuardado);
     try {
    
       
-      if (ultimaModificacion > tsNumber) {
+      if (ultimaModificacion > tsNumber){
         fromCache = false;
         necesitaActualizar = true;
         console.log("🔄 El archivo de Drive fue modificado. Actualizando caché...");
       } else {
         fromCache = true;
+        necesitaActualizar = false;
         console.log("⚡ Usando datos desde ScriptProperties (sin cambios en Drive).");
       }
     } catch (e) {
