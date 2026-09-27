@@ -960,7 +960,7 @@ function getSheetsDataWithCache(spreadSheetId) {
       var ultimaModificacionDrive = archivoDrive.getLastUpdated().getTime();
 
       // Comparamos: si el archivo de Drive fue modificado después de nuestro último respaldo, actualizamos
-      if (ultimaModificacionDrive > timestampGuardado) {
+      if (ultimaModificacionDrive > Number(timestampGuardado)) {
         fromCache = false;
         necesitaActualizar = true;
         console.log("🔄 El archivo de Drive fue modificado. Actualizando caché...");
