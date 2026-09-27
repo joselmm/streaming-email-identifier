@@ -949,7 +949,7 @@ var tsNumber = Number(timestampGuardado);
       console.error("⚠️ No se pudo verificar la fecha en Drive, usando caché local: " + e.message);
     }
   }
-necesitaActualizar=true;
+//necesitaActualizar=true;
 // 3. Si es necesario actualizar, descargamos de la URL y filtramos con mapeo seguro
  if (necesitaActualizar) {
     var fetchedData = UrlFetchApp.fetch(LINK_LIBRERIA).getContentText();
@@ -992,9 +992,9 @@ necesitaActualizar=true;
     var nuevoTimestamp = Date.now();
 
     // Guardamos en las propiedades del script de forma permanente
-   /* guardarEnPropiedades('CACHE_CLIENTES', clients);
+    guardarEnPropiedades('CACHE_CLIENTES', clients);
     guardarEnPropiedades('CACHE_PLATFORMS', platforms);
-    guardarEnPropiedades('CACHE_TIMESTAMP', nuevoTimestamp);*/
+    guardarEnPropiedades('CACHE_TIMESTAMP', nuevoTimestamp);
 
   }
 
