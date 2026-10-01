@@ -897,7 +897,6 @@ function verifyUniversal(root, respuesta, subject, context) {
 }
 
 function VerifyContactAndEmail(userData, masterKey) {
-  return true
     try {
         theContact = userData.contact;
 
