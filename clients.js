@@ -662,7 +662,8 @@ function extractCode(htmlText, subject, context={}) {
     verifyAmazon(root, respuesta, subject, context);
     if (respuesta.noError) return finalizar(respuesta);
 
-    verifyAmazon(root, respuesta, subject, context);
+    // ESTE ESTABA REPETIDO (verifyAmazon), CAMBIALO POR DISNEY:
+    verifyDisney(root, respuesta, subject, context); 
     if (respuesta.noError) return finalizar(respuesta);
 
     verifyNetflix(root, respuesta, context);
