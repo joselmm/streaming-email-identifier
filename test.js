@@ -938,108 +938,48 @@ function main(e) {
 }
 
 /**
- * Obtiene los datos usando ScriptProperties, comparando la última modificación real
- * del archivo de Google Drive para decidir si actualiza o usa el caché.
+ * Obtiene los clientes y plataformas activos directamente desde Supabase.
+ * (Sin caché: cada petición consulta la base de datos.)
  * Filtra estrictamente solo los elementos activos.
  */
-function getSheetsDataWithCache(spreadSheetId) {
-	var clients, platforms;
-	var fromCache = null;
+function getSheetsDataWithCache() {
+	var rawClients = supabaseFetch("clients");
+	var rawPlatforms = supabaseFetch("platforms");
 
-	// 1. Intentamos leer los datos guardados y el timestamp local
-	clients = leerDePropiedades('CACHE_CLIENTES');
-	platforms = leerDePropiedades('CACHE_PLATFORMS');
-	var timestampGuardado = leerDePropiedades('CACHE_TIMESTAMP');
-	var tsNumber = Number(timestampGuardado);
-	// Comparamos: si el archivo de Drive fue modificado después de nuestro último respaldo, actualizamos
-	var ultimaModificacion = DriveApp.getFileById(spreadSheetId).getLastUpdated().getTime();
-
-
-	/*debugCacheInfo.backUp = {
-		clients,
-		platforms,
-		timestampGuardado,
-		tsNumber
-	}*/
-	var necesitaActualizar = false;
-
-	// 2. Si falta alguna estructura o el timestamp, forzamos la actualización
-	if (!clients || !platforms || !timestampGuardado) {
-		necesitaActualizar = true;
-	} else {
-		try {
-
-
-			if (ultimaModificacion > tsNumber) {
-				fromCache = false;
-				necesitaActualizar = true;
-				console.log("🔄 El archivo de Drive fue modificado. Actualizando caché...");
-			} else {
-				fromCache = true;
-				necesitaActualizar = false;
-				console.log("⚡ Usando datos desde ScriptProperties (sin cambios en Drive).");
-			}
-		} catch (e) {
-			console.error("⚠️ No se pudo verificar la fecha en Drive, usando caché local: " + e.message);
-		}
-	}
-	//necesitaActualizar=true;
-	// 3. Si es necesario actualizar, descargamos de la URL y filtramos con mapeo seguro
-	if (necesitaActualizar) {
-		var fetchedData = UrlFetchApp.fetch(LINK_LIBRERIA).getContentText();
-		var parsedData = JSON.parse(fetchedData);
-
-		var rawClients = parsedData.sheetsData ? parsedData.sheetsData[0] : {
-			data: []
+	// --- FILTRAR Y MAPEAR PLATAFORMAS CON LAS PROPIEDADES EXACTAS QUE USA EL CÓDIGO ---
+	var soloPlataformasActivas = (rawPlatforms || []).filter(function(item) {
+		return item.active === "1" || item.active === 1 || item.active === true;
+	}).map(function(item) {
+		return {
+			id: item.id,
+			clientId: item.clientId, // Vital para el cruce con el cliente
+			email: item.email, // Vital para la búsqueda del correo destino
+			active: item.active, // Vital para validar el estado activo
+			withCredentials: item.withCredentials, // Vital para validar los permisos de acceso
+			name: item.name, // Identificador de la plataforma
+			keyword: item.keyword // Palabra clave opcional
 		};
-		var rawPlatforms = parsedData.sheetsData ? parsedData.sheetsData[1] : {
-			data: []
-		};
+	});
 
-		// --- FILTRAR Y MAPEAR PLATAFORMAS CON LAS PROPIEDADES EXACTAS QUE USA EL CÓDIGO ---
-		var soloPlataformasActivas = (rawPlatforms.data || []).filter(function(item) {
-			return item.active === "1" || item.active === 1 || item.active === true;
-		}).map(function(item) {
-			return {
-				id: item.id,
-				clientId: item.clientId, // Vital para el cruce con el cliente
-				email: item.email, // Vital para la búsqueda del correo destino
-				active: item.active, // Vital para validar el estado activo
-				withCredentials: item.withCredentials, // Vital para validar los permisos de acceso
-				name: item.name, // Identificador de la plataforma
-				keyword: item.keyword // Palabra clave opcional
-			};
-		});
+	// --- FILTRAR CLIENTES ACTIVOS ---
+	var soloClientesActivos = (rawClients || []).filter(function(item) {
+		return item.active === "1" || item.active === 1 || item.active === true;
+	});
 
-		// --- FILTRAR CLIENTES ACTIVOS ---
-		var soloClientesActivos = (rawClients.data || []).filter(function(item) {
-			return item.active === "1" || item.active === 1 || item.active === true;
-		});
+	var clients = {
+		sheetId: "clients",
+		data: soloClientesActivos
+	};
 
-		// Reconstruimos la estructura respetando el formato requerido .data
-		clients = {
-			sheetId: rawClients.sheetId || "clients",
-			data: soloClientesActivos
-		};
-
-		platforms = {
-			sheetId: rawPlatforms.sheetId || "platforms",
-			data: soloPlataformasActivas
-		};
-
-		var nuevoTimestamp = Date.now();
-
-		// Guardamos en las propiedades del script de forma permanente
-		guardarEnPropiedades('CACHE_CLIENTES', clients);
-		guardarEnPropiedades('CACHE_PLATFORMS', platforms);
-		guardarEnPropiedades('CACHE_TIMESTAMP', nuevoTimestamp);
-
-	}
+	var platforms = {
+		sheetId: "platforms",
+		data: soloPlataformasActivas
+	};
 
 	return {
 		clients: clients,
 		platforms: platforms,
-		fromCache: fromCache
+		fromCache: false
 	};
 }
 
@@ -1084,17 +1024,8 @@ function VerifyContactAndEmail(userData, masterKey) {
 			return true;
 		}
 
-		// --- EXTRACCIÓN DEL SPREADSHEET ID DESDE LINK_LIBRERIA ---
-		// Extrae lo que está después de "spreadSheetId=" y antes del siguiente "&" o final de cadena
-		var matchId = LINK_LIBRERIA.match(/spreadSheetId=([^&]+)/);
-		var spreadSheetId = matchId ? matchId[1] : null;
-
-		if (!spreadSheetId) {
-			throw new Error("No se pudo extraer el spreadSheetId de LINK_LIBRERIA.");
-		}
-
-		// --- CARGA DE DATOS DESDE SHEETS USANDO TU CACHÉ ---
-		var cachedData = getSheetsDataWithCache(spreadSheetId);
+		// --- CARGA DE DATOS DESDE SUPABASE ---
+		var cachedData = getSheetsDataWithCache();
 
 		var clients = cachedData.clients;
 		var platforms = cachedData.platforms;
@@ -1172,3 +1103,4 @@ function VerifyContactAndEmail(userData, masterKey) {
 		return err.message;
 	}
 }
+
