@@ -515,6 +515,23 @@ function verifyDisney(root, respuesta, subject, context) {
     return respuesta;
   }
 
+
+  //2.5
+  const directCodeElement = root.querySelector("table td[style*='font-size:28px']");
+  if (directCodeElement?.innerText?.trim()?.match(regexSixNumberMax)) {
+    var code = directCodeElement?.innerText?.trim()?.match(regexSixNumberMax)[0];
+    context.sendJustIf = "{enviar_codigos_disney}"
+    context.keyword = "disney";
+    console.log("Es de código de acceso único para Disney+ Elemento Directo");
+
+    respuesta.noError = true;
+    respuesta.code = code;
+    respuesta.about = "Código de acceso único Disney Plus (Válido por 15 min)";
+
+    return respuesta;
+  }
+
+
   // 2. Buscar tabla
   const table = root.querySelector("table.module_1 table.module");
   if (!table) {
