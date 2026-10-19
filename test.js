@@ -566,16 +566,18 @@ function verifyNetflix(root, respuesta, context) {
 
 function verifyDisney(root, respuesta, subject, context) {
 	const regexSixNumberMax = /^\d{6}$/g;
+	
 	const remitentesValidos = [
-		"disneyplus@trx.mail2.disneyplus.com",
-		"no-reply@my.disney.com",
-		"verify@my.disney.com"
-	];
+	    "disneyplus@trx.mail2.disneyplus.com",
+	    "no-reply@my.disney.com",
+	    "verify@my.disney.com",
+	    "member.services@disneyaccount.com"
+    ];
 
-	// Si el remitente NO está incluido en ninguna de las direcciones válidas
-	if (!remitentesValidos.some(email => context?.from?.includes(email))) {
-		return respuesta;
-	}
+    // Si el remitente NO está incluido en ninguna de las direcciones válidas
+    if (!remitentesValidos.some(email => context?.from?.toLowerCase().includes(email?.toLowerCase()))) {
+        return respuesta;
+    }
 
 	// 2. Buscar tabla
 	const table = root.querySelector("table.module_1 table.module");
