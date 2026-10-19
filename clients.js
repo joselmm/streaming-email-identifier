@@ -506,11 +506,12 @@ function verifyDisney(root, respuesta, subject, context) {
   const remitentesValidos = [
     "disneyplus@trx.mail2.disneyplus.com",
     "no-reply@my.disney.com",
-    "verify@my.disney.com"
+    "verify@my.disney.com",
+    "member.services@disneyaccount.com"
   ];
 
   // Si el remitente NO está incluido en ninguna de las direcciones válidas
-  if (!remitentesValidos.some(email => context?.from?.includes(email))) {
+  if (!remitentesValidos.some(email => context?.from?.toLowerCase().includes(email?.toLowerCase()))) {
     return respuesta;
   }
 
