@@ -565,62 +565,75 @@ function verifyNetflix(root, respuesta, context) {
 }
 
 function verifyDisney(root, respuesta, subject, context) {
-	const regexSixNumberMax = /^\d{6}$/g;
-	
-	const remitentesValidos = [
-	    "disneyplus@trx.mail2.disneyplus.com",
-	    "no-reply@my.disney.com",
-	    "verify@my.disney.com",
-	    "member.services@disneyaccount.com"
-    ];
+  const regexSixNumberMax = /^\d{6}$/g;
+  const remitentesValidos = [
+    "disneyplus@trx.mail2.disneyplus.com",
+    "no-reply@my.disney.com",
+    "verify@my.disney.com",
+    "member.services@disneyaccount.com"
+  ];
 
-    // Si el remitente NO está incluido en ninguna de las direcciones válidas
-    if (!remitentesValidos.some(email => context?.from?.toLowerCase().includes(email?.toLowerCase()))) {
-        return respuesta;
+  // Si el remitente NO está incluido en ninguna de las direcciones válidas
+  if (!remitentesValidos.some(email => context?.from?.toLowerCase().includes(email?.toLowerCase()))) {
+    return respuesta;
+  }
+
+
+  //2.5
+  const directCodeElement = root.querySelector("table td[style*='font-size:28px']");
+  if (directCodeElement?.innerText?.trim()?.match(regexSixNumberMax)) {
+    var code = directCodeElement?.innerText?.trim()?.match(regexSixNumberMax)[0];
+    context.sendJustIf = "{enviar_codigos_disney}"
+    context.keyword = "disney";
+    console.log("Es de código de acceso único para Disney+ Elemento Directo");
+
+    respuesta.noError = true;
+    respuesta.code = code;
+    respuesta.about = "Código de acceso único Disney Plus (Válido por 15 min)";
+
+    return respuesta;
+  }
+
+
+  // 2. Buscar tabla
+  const table = root.querySelector("table.module_1 table.module");
+  if (!table) {
+    console.log("No se encontró tabla Disney");
+    return respuesta;
+  }
+
+  // 3. Buscar filas y tds con chequeo seguro
+  const rows = table.querySelectorAll("tr") || [];
+  const tds = [];
+  rows.forEach(tr => {
+    const td = tr.querySelector("td");
+    if (td) tds.push(td);
+  });
+
+  // 4. Desestructurar con defaults
+  const [labelElement = null, , codeElement = null] = tds;
+
+  if (labelElement && codeElement) {
+    const code = codeElement?.innerText?.trim();
+    //const labelText = labelElement?.innerText?.trim();
+    //const isLabelCodigo = labelText === "Tu código de acceso único para Disney+";
+
+    if (code?.match(regexSixNumberMax)) {
+      context.sendJustIf = "{enviar_codigos_disney}"
+      context.keyword = "disney";
+      console.log("Es de código de acceso único para Disney+");
+
+      respuesta.noError = true;
+      respuesta.code = code;
+      respuesta.about = "Código de acceso único Disney Plus (Válido por 15 min)";
+
+      return respuesta;
     }
+  }
 
-	// 2. Buscar tabla
-	const table = root.querySelector("table.module_1 table.module");
-	if (!table) {
-		console.log("No se encontró tabla Disney");
-		return respuesta;
-	}
-
-	// 3. Buscar filas y tds con chequeo seguro
-	const rows = table.querySelectorAll("tr") || [];
-	const tds = [];
-	rows.forEach(tr => {
-		const td = tr.querySelector("td");
-		if (td) tds.push(td);
-	});
-
-	// 4. Desestructurar con defaults
-	const [labelElement = null, , codeElement = null] = tds;
-
-	if (labelElement && codeElement) {
-		const code = codeElement?.innerText?.trim();
-		//const labelText = labelElement?.innerText?.trim();
-		//const isLabelCodigo = labelText === "Tu código de acceso único para Disney+";
-
-		if (code?.match(regexSixNumberMax)) {
-			context.sendJustIf = "{enviar_codigos_disney}"
-			context.keyword = "disney";
-			console.log("Es de código de acceso único para Disney+");
-
-			respuesta.noError = true;
-			respuesta.code = code;
-			respuesta.about = "Código de acceso único Disney Plus (Válido por 15 min)";
-
-			return respuesta;
-		}
-	}
-
-	console.log("No es de Disney+");
-	return respuesta;
+  console.log("No es de Disney+");
+  return respuesta;
 }
-
-
-
 
 function verifyCrunchyrollLogin(root, respuesta, subject, context) {
 	if (context?.from?.includes("hello@info.crunchyroll.com") === false) {
