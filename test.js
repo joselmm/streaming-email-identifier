@@ -369,53 +369,68 @@ function getEnvironment() {
 
 function verifyMax(root, respuesta, subject, context) {
 
-	const allowedSenders = [
-		"no-reply@alerts.hbomax.com",
-		"hbomax@service.hbomax.com",
-		"no-reply@marketing.hbomax.com"
-	];
+  const allowedSenders = [
+    "no-reply@alerts.hbomax.com",
+    "hbomax@service.hbomax.com",
+    "no-reply@marketing.hbomax.com"
+  ];
 
-	const isAllowed = allowedSenders.some(sender => context?.from?.includes(sender));
+  const isAllowed = allowedSenders.some(sender => context?.from?.includes(sender));
 
-	if (!isAllowed) {
-		return respuesta;
-	}
+  if (!isAllowed) {
+    return respuesta;
+  }
 
-	context.keyword = "max";
+  context.keyword = "max";
 
-	var regexSixNumberMax = /^\d{6}$/g;
+  var regexSixNumberMax = /^\d{6}$/g;
 
-	//if(subject.includes("Recuperación de contraseña") || subject.includes("Password recovery") ) return respuesta;
-	//FORMATO CODIGO DE INICIO DE SESION EN LA WEB CON MAX:
-	var emailHtml = root.querySelector("tr:nth-child(1) > td > p > span > b");
+  //if(subject.includes("Recuperación de contraseña") || subject.includes("Password recovery") ) return respuesta;
+  //FORMATO CODIGO DE INICIO DE SESION EN LA WEB CON MAX:
+  var emailHtml = root.querySelector("tr:nth-child(1) > td > p > span > b");
 
-	if (emailHtml?.innerText?.trim()?.match(regexSixNumberMax)?.length > 0 && (subject.includes("Urgente: Tu código de un solo uso de HBO Max") || subject.includes("Time Sensitive: Your One-Time HBO Max Code"))) {
+  if (emailHtml?.innerText?.trim()?.match(regexSixNumberMax)?.length > 0 && (subject.includes("Urgente: Tu código de un solo uso de HBO Max") || subject.includes("Time Sensitive: Your One-Time HBO Max Code"))) {
 
-		respuesta.noError = true;
-		respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberMax)[0];
-		respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en Hbo Max'
-		console.log("Es de max codigo de iniciar sesion");
+    respuesta.noError = true;
+    respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberMax)[0];
+    respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en Hbo Max'
+    console.log("Es de max codigo de iniciar sesion");
 
-		return respuesta
-	}
+    return respuesta
+  }
 
-	//FORMATO CODIGO DE INICIO DE SESION EN INGLES:
-	var emailHtml = root.querySelector('p > strong[style="font-weight:700 !important"]');
-	var codeText = emailHtml?.innerText?.trim() || "";
-	var isCode = codeText.match(regexSixNumberMax)?.length > 0;
+  //FORMATO CODIGO DE INICIO DE SESION EN INGLES:
+  var emailHtml = root.querySelector('p > strong[style="font-weight:700 !important"]');
+  var codeText = emailHtml?.innerText?.trim() || "";
+  var isCode = codeText.match(regexSixNumberMax)?.length > 0;
 
-	if (isCode && (subject.includes("Urgente: Tu código de un solo uso de HBO Max") || subject.includes("Time Sensitive: Your One-Time HBO Max Code"))) {
+  if (isCode && (subject.includes("Urgente: Tu código de un solo uso de HBO Max") || subject.includes("Time Sensitive: Your One-Time HBO Max Code"))) {
 
-		respuesta.noError = true;
-		respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberMax)[0];
-		respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en Hbo Max'
-		console.log("Es de max codigo de iniciar sesion");
+    respuesta.noError = true;
+    respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberMax)[0];
+    respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en Hbo Max'
+    console.log("Es de max codigo de iniciar sesion");
 
-		return respuesta
-	}
+    return respuesta
+  }
 
-	console.log("no es de Max");
-	return respuesta;
+  //FORMATO DE OTRO
+  var codeHtml = root.querySelector("p.es-text-mobile-size-36 > strong");
+  var codeText = codeHtml?.innerText?.trim() || "";
+  var isCode = codeText.match(regexSixNumberMax)?.length > 0;
+  if (isCode && subject.includes("Tu código de verificación de cuenta")) {
+
+    respuesta.noError = true;
+    respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberMax)[0];
+    respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en Hbo Max'
+    console.log("Es de max codigo de iniciar sesion");
+
+    return respuesta
+  }
+
+
+  console.log("no es de Max");
+  return respuesta;
 }
 
 function verifyMaxPassReset(root, respuesta, subject, context) {
