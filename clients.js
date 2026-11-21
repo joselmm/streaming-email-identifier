@@ -333,7 +333,15 @@ function getEnvironment() {
 
 function verifyMax(root, respuesta, subject, context) {
 
-  if (!(context?.from?.includes("no-reply@alerts.hbomax.com") || context?.from?.includes("hbomax@service.hbomax.com"))) {
+  const allowedSenders = [
+    "no-reply@alerts.hbomax.com",
+    "hbomax@service.hbomax.com",
+    "no-reply@marketing.hbomax.com"
+  ];
+
+  const isAllowed = allowedSenders.some(sender => context?.from?.includes(sender));
+
+  if (!isAllowed) {
     return respuesta;
   }
 
@@ -359,7 +367,7 @@ function verifyMax(root, respuesta, subject, context) {
   var emailHtml = root.querySelector('p > strong[style="font-weight:700 !important"]');
   var codeText = emailHtml?.innerText?.trim() || "";
   var isCode = codeText.match(regexSixNumberMax)?.length > 0;
-  
+
   if (isCode && (subject.includes("Urgente: Tu código de un solo uso de HBO Max") || subject.includes("Time Sensitive: Your One-Time HBO Max Code"))) {
 
     respuesta.noError = true;
@@ -370,10 +378,24 @@ function verifyMax(root, respuesta, subject, context) {
     return respuesta
   }
 
+  //FORMATO DE OTRO
+  var codeHtml = root.querySelector("p.es-text-mobile-size-36 > strong");
+  var codeText = codeHtml?.innerText?.trim() || "";
+  var isCode = codeText.match(regexSixNumberMax)?.length > 0;
+  if (isCode && subject.includes("Tu código de verificación de cuenta")) {
+
+    respuesta.noError = true;
+    respuesta.code = emailHtml?.innerText?.trim()?.match(regexSixNumberMax)[0];
+    respuesta.about = 'Codigo de verificacion Para Iniciar Sesion en Hbo Max'
+    console.log("Es de max codigo de iniciar sesion");
+
+    return respuesta
+  }
+
+
   console.log("no es de Max");
   return respuesta;
 }
-
 
 
 
