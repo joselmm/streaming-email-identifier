@@ -369,7 +369,15 @@ function getEnvironment() {
 
 function verifyMax(root, respuesta, subject, context) {
 
-	if (!(context?.from?.includes("no-reply@alerts.hbomax.com") || context?.from?.includes("hbomax@service.hbomax.com"))) {
+	const allowedSenders = [
+		"no-reply@alerts.hbomax.com",
+		"hbomax@service.hbomax.com",
+		"no-reply@marketing.hbomax.com"
+	];
+
+	const isAllowed = allowedSenders.some(sender => context?.from?.includes(sender));
+
+	if (!isAllowed) {
 		return respuesta;
 	}
 
